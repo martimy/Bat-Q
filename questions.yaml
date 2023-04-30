@@ -1,0 +1,277 @@
+Batfish:
+- category: Snapshot Input
+  description: This category of questions allows you to learn how well Batfish understands
+    your network snapshot.
+  questions:
+  - fun: initIssues
+    name: Snapshot Initialization Issues
+  - fun: fileParseStatus
+    name: Snapshot Input File Parse Status
+  - fun: parseWarning
+    name: Snapshot Input File Parse Warnings
+
+- category: Configuration Properties
+  description: This category of questions enables you to retrieve and process the
+    contents of device configurations in a vendor-agnostic manner (except where the
+    question itself is vendor-specific). Batfish organizes configuration content into
+    several sub-categories.
+  questions:
+  - fun: nodeProperties
+    input:
+    - nodes
+    - properties
+    name: Node Properties
+  - fun: interfaceProperties
+    input:
+    - nodes
+    - interfaces
+    - properties
+    - excludeShutInterfaces
+    name: Interface Properties
+  - fun: bgpProcessConfiguration
+    input:
+    - nodes
+    - properties
+    name: BGP Process Configuration
+  - fun: bgpPeerConfiguration
+    input:
+    - nodes
+    - properties
+    name: BGP Peer Configuration
+  - fun: hsrpProperties
+    input:
+    - nodes
+    - interfaces
+    - virtualAddresses
+    - excludeShutInterfaces
+    name: HSRP Properties
+  - fun: ospfProcessConfiguration
+    input:
+    - nodes
+    - properties
+    name: OSPF Process Configuration
+  - fun: ospfInterfaceConfiguration
+    input:
+    - nodes
+    - properties
+    name: OSPF Interface Configuration
+  - fun: ospfAreaConfiguration
+    input:
+    - nodes
+    name: OSPF Area Configuration
+  - fun: mlagProperties
+    input:
+    - nodes
+    - mlagIds
+    name: Multi-chassis LAG
+  - fun: ipOwners
+    input:
+    - duplicatesOnly
+    name: IP Owners
+  - fun: namedStructures
+    input:
+    - nodes
+    - structureTypes
+    - structureNames
+    - ignoreGenerated
+    - indicatePresence
+    name: Named Structures
+  - fun: definedStructures
+    input:
+    - filename
+    - nodes
+    - names
+    - types
+    name: Defined Structures
+  - fun: referencedStructures
+    input:
+    - nodes
+    - names
+    - types
+    name: Referenced Structures
+  - fun: undefinedReferences
+    input:
+    - nodes
+    name: Undefined References
+  - fun: unusedStructures
+    input:
+    - nodes
+    name: Unused Structures
+  - fun: switchedVlanProperties
+    input:
+    - nodes
+    - interfaces
+    - vlans
+    - excludeShutInterfaces
+    name: VLAN Properties
+  - fun: vrrpProperties
+    input:
+    - nodes
+    - interfaces
+    - virtualAddresses
+    - excludeShutInterfaces
+    name: VRRP Properties
+  - fun: a10VirtualServerConfiguration
+    input:
+    - nodes
+    - virtualServerIps
+    name: A10 Virtual Server Configuration
+  - fun: f5BigipVipConfiguration
+    input:
+    - nodes
+    name: F5 BIG-IP VIP Configuration
+- category: Topology
+  description: This category of questions is intended to retrieve the network topology
+    used by Batfish. This topology is a combination of information in the snapshot
+    and inference logic (e.g., which interfaces are layer3 neighbors). Currently,
+    Layer 3 topology can be retrieved.
+  questions:
+  - fun: userProvidedLayer1Edges
+    input:
+    - nodes
+    - remoteNodes
+    name: User Provided Layer 1 Topology
+  - fun: layer3Edges
+    input:
+    - nodes
+    - remoteNodes
+    name: Layer 3 Topology
+- category: Routing Protocol Sessions and Policies
+  description: This category of questions reveals information regarding which routing
+    protocol sessions are compatibly configured and which ones are established. It
+    also allows to you analyze BGP routing policies.
+  questions:
+  - fun: bgpSessionCompatibility
+    input:
+    - nodes
+    - remoteNodes
+    - status
+    - type
+    name: BGP Session Compatibility
+  - fun: bgpSessionStatus
+    input:
+    - nodes
+    - remoteNodes
+    - status
+    - type
+    name: BGP Session Status
+  - fun: bgpEdges
+    input:
+    - nodes
+    - remoteNodes
+    name: BGP Edges
+  - fun: ospfSessionCompatibility
+    input:
+    - nodes
+    - remoteNodes
+    - statuses
+    name: OSPF Session Compatibility
+  - fun: ospfEdges
+    input:
+    - nodes
+    - remoteNodes
+    name: OSPF Edges
+  - fun: testRoutePolicies
+    input:
+    - nodes
+    - policies
+    - inputRoutes
+    - direction
+    name: Test Route Policies
+  - fun: searchRoutePolicies
+    input:
+    - nodes
+    - policies
+    - inputConstraints
+    - action
+    - outputConstraints
+    - perPath
+    name: Search Route Policies
+- category: Routing and Forwarding Tables
+  description: This category of questions allows you to query the RIBs and FIBs computed
+    by Batfish.
+  questions:
+  - fun: routes
+    name: Routes
+  - fun: bgpRib
+    name: BGP RIB
+  - fun: evpnRib
+    name: EVPN RIB
+  - fun: lpmRoutes
+    name: Longest Prefix Match
+- category: Packet Forwarding
+  description: This category of questions allows you to query how different types
+    of traffic is forwarded by the network and if endpoints are able to communicate.
+    You can analyze these aspects in a few different ways.
+  questions:
+  - fun: traceroute
+    name: Traceroute
+  - fun: bidirectionalTraceroute
+    name: Bi-directional Traceroute
+  - fun: reachability
+    name: Reachability
+  - fun: bidirectionalReachability
+    name: Bi-directional Reachability
+  - fun: detectLoops
+    name: Loop Detection
+  - fun: subnetMultipathConsistency
+    name: Multipath Consistency for host-subnets
+  - fun: loopbackMultipathConsistency
+    name: Multipath Consistency for router loopbacks
+- category: Access-lists and firewall rules
+  description: This category of questions allows you to analyze the behavior of access
+    control lists and firewall rules. It also allows you to comprehensively validate
+    (aka verification) that some traffic is or is not allowed.
+  questions:
+  - fun: filterLineReachability
+    name: Filter Line Reachability
+  - fun: searchFilters
+    name: Search Filters
+  - fun: testFilters
+    name: Test Filters
+  - fun: findMatchingFilterLines
+    name: Find Matching Filter Lines
+- category: IPSec Tunnels
+  description: This category of questions allows you to query IPSec sessions and tunnels.
+  questions:
+  - fun: ipsecSessionStatus
+    name: IPSec Session Status
+  - fun: ipsecEdges
+    name: IPSec Edges
+- category: VXLAN and EVPN
+  description: This category of questions allows you to query aspects of VXLAN and
+    EVPN configuration and behavior.
+  questions:
+  - fun: vxlanVniProperties
+    name: VXLAN VNI Properties
+  - fun: vxlanEdges
+    name: VXLAN Edges
+  - fun: evpnL3VniProperties
+    name: L3 EVPN VNIs
+- category: Resolving Specifiers
+  description: Specifier grammars allow you to specify complex inputs for Batfish
+    questions. This category of questions reveals how specifier inputs are resolved
+    by Batfish.
+  questions:
+  - fun: resolveLocationSpecifier
+    name: Resolve Location Specifier
+  - fun: resolveFilterSpecifier
+    name: Resolve Filter Specifier
+  - fun: resolveNodeSpecifier
+    name: Resolve Node Specifier
+  - fun: resolveInterfaceSpecifier
+    name: Resolve Interface Specifier
+  - fun: resolveIpsOfLocationSpecifier
+    name: Resolve IPs from Location Specifier
+  - fun: resolveIpSpecifier
+    name: Resolve IP Specifier
+- category: Differential Questions
+  description: Differential questions enable you to discover configuration and behavior
+    differences between two snapshot of the network. Most of the Batfish questions
+    can be run differentially, but Batfish also has two questions that are exclusively
+    differential.
+  questions:
+  - fun: compareFilters
+    name: Compare Filters
+  - fun: differentialReachability
+    name: Differential Reachability
