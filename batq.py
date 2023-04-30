@@ -130,7 +130,7 @@ if st.button('Run Query', disabled=answered):
         st.error(f'Error running query {e}')
 
 
-# st.header("Answered Questions")
+st.header("Answered Questions")
 # for item in st.session_state.previous:
 #     question = item['name']
 #     st.subheader(question)
