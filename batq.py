@@ -51,28 +51,28 @@ def load_data(SNAPSHOT_DIR):
 
     # Creat a dict of all questions
     questions_list = list_questions()
-    questions_dict = {q['name']: q for q in questions_list}
+    questions_dict = {q["name"]: q for q in questions_list}
 
     # Create a list of all unique tags
-    all_tags = list(set(tag for q in questions_list for tag in q['tags']))
+    all_tags = list(set(tag for q in questions_list for tag in q["tags"]))
 
     # Create a mapping between a tag and the corresponding names
-    tag_to_names = {tag: [q['name']
-                          for q in questions_list if tag in q['tags']] for tag in all_tags}
+    tag_to_names = {
+        tag: [q["name"] for q in questions_list if tag in q["tags"]] for tag in all_tags
+    }
 
     return questions_dict, all_tags, tag_to_names
 
 
 st.set_page_config(layout="wide")
-st.title('Network Analysis')
+st.title("Network Analysis")
 st.markdown(APP)
 
-if 'previous' not in st.session_state:
+if "previous" not in st.session_state:
     st.session_state.previous = []
 
 # Get directory path from user
-SNAPSHOT_DIR = st.sidebar.text_input(
-    'Enter directory path:', '/path/to/configs')
+SNAPSHOT_DIR = st.sidebar.text_input("Enter directory path:", "/path/to/configs")
 
 try:
     questions_dict, all_tags, tag_to_names = load_data(SNAPSHOT_DIR)
@@ -81,19 +81,18 @@ except Exception as e:
 
 tag = st.sidebar.selectbox("Select a Category", all_tags)
 question_name = st.sidebar.selectbox("Select a Question", tag_to_names[tag])
-st.sidebar.write(questions_dict[question_name]['description'])
+st.sidebar.write(questions_dict[question_name]["description"])
 
 st.header(f"Selected Question: {question_name}")
 
 # Check if the question has been answered
-answered = any(
-    [item['name'] == question_name for item in st.session_state.previous])
+answered = any([item["name"] == question_name for item in st.session_state.previous])
 
 if answered:
     st.info("This question is answered below.")
 
 # Run Batfish query and display results
-if st.button('Run Query', disabled=answered):
+if st.button("Run Query", disabled=answered):
     try:
         # Run query
         fun = getattr(bfq, question_name)
@@ -102,17 +101,18 @@ if st.button('Run Query', disabled=answered):
         # Replace empty lists with NaN values
         for c in result.columns:
             result[c] = result[c].apply(
-                lambda y: nan if isinstance(y, list) and len(y) == 0 else y)
+                lambda y: nan if isinstance(y, list) and len(y) == 0 else y
+            )
 
         # Replace empty strings with NaN values
-        result = result.replace('', nan)
+        result = result.replace("", nan)
 
         # Drop all empty columns
-        filtered_df = result.dropna(axis=1, how='all')
-        filtered_df = filtered_df.replace(nan, '')
+        filtered_df = result.dropna(axis=1, how="all")
+        filtered_df = filtered_df.replace(nan, "")
 
         removed = set(result.columns) - set(filtered_df.columns)
-        removed_str = ', '.join(list(removed))
+        removed_str = ", ".join(list(removed))
 
         # Print the result
         if filtered_df.empty:
@@ -120,14 +120,21 @@ if st.button('Run Query', disabled=answered):
         else:
             st.dataframe(filtered_df, use_container_width=True)
             st.session_state.previous.insert(
-                0, {"name": question_name, "result": filtered_df, "removed": removed_str, "favorite": False})
+                0,
+                {
+                    "name": question_name,
+                    "result": filtered_df,
+                    "removed": removed_str,
+                    "favorite": False,
+                },
+            )
 
         # Print removed columns
         if removed:
             st.write(f"The query returned these empty columns: {removed_str}.")
 
     except Exception as e:
-        st.error(f'Error running query {e}')
+        st.error(f"Error running query {e}")
 
 
 st.header("Answered Questions")
@@ -142,7 +149,7 @@ st.header("Answered Questions")
 #             st.markdown(item['removed'])
 
 for item in st.session_state.previous:
-    question = item['name']
+    question = item["name"]
     st.subheader(question)
 
     # Add checkbox for marking as favorite
@@ -150,11 +157,11 @@ for item in st.session_state.previous:
     # item['favorite'] = fave
 
     with st.expander("Description", expanded=False):
-        st.markdown(questions_dict[question]['description'])
-    st.dataframe(item['result'], use_container_width=True)
-    if item['removed']:
+        st.markdown(questions_dict[question]["description"])
+    st.dataframe(item["result"], use_container_width=True)
+    if item["removed"]:
         with st.expander("Removed Columns", expanded=False):
-            st.markdown(item['removed'])
+            st.markdown(item["removed"])
 
 
 if not st.session_state.previous:

@@ -29,76 +29,106 @@ def upload_questions():
         return yaml.safe_load(f)
 
 
-if 'qlist' not in st.session_state:
+def update_list(key=None):
+    print(key)
+    st.session_state.cats[key] = st.session_state[key]
+
+
+# def update_checkbox():
+#     st.session_state.qqqhelp = not st.session_state.qqhelp
+
+
+# Initialize the session state
+if "qqqhelp" not in st.session_state:
+    st.session_state.qqqhelp = False
+
+if "qlist" not in st.session_state:
     st.session_state.qlist = {}
 
-st.header('Select Questions')
-questions_help = st.checkbox("Full Help", False)
+if "cats" not in st.session_state:
+    st.session_state.cats = {}
 
-# Load the YAML file
+# The page starts here
+st.header("Select Questions")
+questions_help = st.checkbox("Full Help", value=False, key="qshelp")
+
+# Load the YAML file containing all questions
 data = upload_questions()
 data = data["Batfish"]
 
+# Load previously user-saved questions
 saved_questions = st.sidebar.file_uploader(
-    "Upload Questions", type='yaml', help="Load previously saved questions from YAML file.")
+    "Upload Questions", type="yaml", help="Load saved questions."
+)
 
 # Display category selection dropdown
-category_list = [item['category'] for item in data]
+category_list = [item["category"] for item in data]
 
-
+# alldata inlcudes all data releated to saved questions
 if saved_questions:
     alldata = yaml.safe_load(saved_questions)
-    alldata = alldata['questions']
+    alldata = alldata["questions"]
 else:
     alldata = st.session_state.get("qlist", {})
+
 all_selected = []
 
-
-# To save the list when navigating to another page
-default = {category: [item["name"] for item in alldata[category] if item.get("name")] for category in alldata}
-
-
+# Split the screen into two columns
 col1, col2 = st.columns(2, gap="medium")
 
 with col1:
     st.subheader("All Questions")
 
-    for selected_category in category_list:
-        st.markdown(f"**{selected_category}**")
+    for selected_category in data:
 
-        # Filter the data based on the selected category
-        category_data = [
-            item for item in data if item['category'] == selected_category][0]
+        category_name = selected_category.get("category", "")
+        st.markdown(f"**{category_name}**")
+
+        if category_name not in st.session_state.cats:
+            st.session_state.cats["category_name"] = {}
 
         if questions_help:
-            st.markdown(category_data.get('description', ''))
+            category_desc = selected_category.get("description", "No description!")
+            st.markdown(category_desc)
 
-        # Display name selection dropdown
-        questions_list = [item['name'] for item in category_data['questions']]
+        # Get the question list to populate the multiselect widget
+        questions_list = [
+            item["name"]
+            for item in selected_category.get("questions")
+            if item.get("name")
+        ]
+
         selected_quetions = st.multiselect(
-            "Select a Question", questions_list, default=default.get(selected_category))
+            "Select a Question",
+            questions_list,
+            key=category_name,
+            default=st.session_state.cats.get(category_name),
+            on_change=update_list,
+            kwargs={"key": category_name},
+        )
 
+        # Add the selected question to the displayed list
         all_selected.extend(selected_quetions)
-
-        # Filter the data based on the selected question
-        questions_data = [item for item in category_data['questions']
-                          if item['name'] in selected_quetions]
-        alldata[selected_category] = questions_data
+        alldata[category_name] = [
+            item
+            for item in selected_category.get("questions")
+            if item["name"] in selected_quetions
+        ]
 
 with col2:
     st.subheader("Selected Questions")
-
+    st.markdown("These are all the selected questions.")
     s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
-    st.markdown('\n'.join(s))
+    st.markdown("\n".join(s))
 
     yaml_list = yaml.dump({"questions": alldata})
 
 st.sidebar.download_button(
     label="Save Seletions",
     data=yaml_list,
-    file_name='my_selections.yaml',
-    mime='text/yaml',
-    help="Save selected questions to a local YAML file."
+    file_name="my_selections.yaml",
+    mime="text/yaml",
+    help="Save selected questions to a local YAML file.",
 )
 
 st.session_state.qlist = alldata
