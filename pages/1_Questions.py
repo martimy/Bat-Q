@@ -30,18 +30,10 @@ def upload_questions():
 
 
 def update_list(key=None):
-    print(key)
     st.session_state.cats[key] = st.session_state[key]
 
 
-# def update_checkbox():
-#     st.session_state.qqqhelp = not st.session_state.qqhelp
-
-
 # Initialize the session state
-if "qqqhelp" not in st.session_state:
-    st.session_state.qqqhelp = False
-
 if "qlist" not in st.session_state:
     st.session_state.qlist = {}
 
