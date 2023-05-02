@@ -23,9 +23,12 @@ from pybatfish.client.commands import (
     bf_session,
     bf_set_network,
     bf_init_snapshot,
+    bf_set_snapshot
 )
 from utils import test_connection
+import logging
 
+logging.getLogger("pybatfish").setLevel(logging.WARNING)
 NO_DATA = """No data available!
 This usually means that the query is not applicable to the network.
 """
@@ -45,20 +48,22 @@ MAXTABS = 6
 
 
 @st.cache_data(experimental_allow_widgets=True)
-def load_snapshot():
-    print("loading snapshot")
+def load_net_configs():
+    logging.warning("loading snapshot")
     return st.sidebar.file_uploader("Upload snapshot", type="zip")
 
-
 @st.cache_data
-def load_session(host, netname):
-    print("setting network")
-    bf_session.host = host
-    bf_set_network(netname)
+def init_session(snapshot, network):
+    bf_init_snapshot(config_filename, name=snapshot, overwrite=True)
+    bf_set_network(network)
     load_questions()
 
 
 def run_query(question_name):
+    """
+    Run Batfish question.
+    """
+
     try:
         # Run query
         fun = getattr(bfq, question_name)
@@ -96,26 +101,25 @@ def run_query(question_name):
         st.error(f"Error running query {e}")
 
 
-def connect_host():
+# def connect_host():
+#     host = st.sidebar.text_input(
+#         "Enter Batfish host:", st.session_state.get("host", "localhost")
+#     )
 
-    host = st.sidebar.text_input(
-        "Enter Batfish host:", st.session_state.get("host", "localhost")
-    )
+#     if not st.session_state.hostreachable:
+#         connected, message = test_connection(host)
+#         placeholder = st.sidebar.empty()
+#         if connected:
+#             placeholder.success(message)
+#             st.session_state.host = host
+#             st.session_state.hostreachable = True
+#         else:
+#             placeholder.error(message)
+#         time.sleep(1)  # Wait for 3 seconds
+#         placeholder.empty()
 
-    if not st.session_state.hostreacable:
-        connected, message = test_connection(host)
-        placeholder = st.sidebar.empty()
-        if connected:
-            placeholder.success(message)
-            st.session_state.host = host
-            st.session_state.hostreacable = True
-        else:
-            placeholder.error(message)
-        time.sleep(1)  # Wait for 3 seconds
-        placeholder.empty()
-
-    status = "Connected!" if st.session_state.hostreacable else "Not Connected!"
-    st.sidebar.write(f"Hosts Status: {status}")
+#     status = "Connected!" if st.session_state.hostreachable else "Not Connected!"
+#     st.sidebar.write(f"Hosts Status: {status}")
 
 
 # Start Page Here
@@ -124,46 +128,61 @@ st.header("Network Analysis")
 st.markdown(APP)
 
 # Get Batfish host from user
-if "host" not in st.session_state:
-    st.session_state.host = "localhost"
+if "old_host" not in st.session_state:
+    st.session_state.old_host = "localhost"
 
-if "hostreacable" not in st.session_state:
-    st.session_state.hostreacable = False
+if "hostreachable" not in st.session_state:
+    st.session_state.hostreachable = False
 
 
-connect_host()
-host = st.session_state.get("host", "localhost")
+def update_host_value():
+    st.session_state.old_host = st.session_state.bf_host
 
-# st.sidebar.text_input("Enter Snapshot Name", "First")
-# Get configuration files
+# Step 1: Get Batfish host address from user
+st.sidebar.text_input("Enter Batfish host address:",
+                                value=st.session_state.old_host, 
+                                key="bf_host",
+                                on_change=update_host_value)
 
-try:
-    load_session(host, "TestNetwork")
-except Exception as e:
-    st.error(e)
+snap = bf_set_snapshot('First')
+st.write(snap)
 
-snap = load_snapshot()
-if snap:
-    bf_init_snapshot(snap, name="First", overwrite=True)
-# else:
-#     st.warning("Load a network snapshot!")
+# Step 2: Check if the host is reachable and allow user to upload network snapshot
+connected, message = test_connection(st.session_state.bf_host)
+if connected:
+    try:
+        bf_session.host = st.session_state.bf_host
 
-alldata = st.session_state.get("qlist")
+        st.write(bf_extract_facts)
+        # allow user to upload network config files
+        config_filename = load_net_configs()
+        if config_filename is None:
+            st.warning("Please upload a network snapshot to continue.")
+        else:
+            init_session("First", "Network")
 
-if alldata:
-    questions_list = [
-        (item["name"], item["fun"])
-        for category in alldata
-        for item in alldata[category]
-        if item.get("fun")
-    ]
+            # Step 3: Execute a list of questions
+            alldata = st.session_state.get("qlist")
 
-    tabs = st.tabs([q[0] for q in questions_list])
-    idx = 0
-    for tab in tabs:
-        with tab:
-            run_query(questions_list[idx][1])
-            idx += 1
+            if alldata:
+                questions_list = [
+                    (item["name"], item["fun"])
+                    for category in alldata
+                    for item in alldata[category]
+                    if item.get("fun")
+                ]
 
+                tabs = st.tabs([q[0] for q in questions_list])
+                idx = 0
+                for tab in tabs:
+                    with tab:
+                        run_query(questions_list[idx][1])
+                        idx += 1
+
+            else:
+                st.error("Select some questions to proceed.")
+
+    except Exception as e:
+        st.error(f"Unable to connect to Batfish at {st.session_state.bf_host}, {str(e)}")
 else:
-    st.error("Select some question to proceed.")
+    st.error(f"Unable to connect to Batfish at {st.session_state.bf_host}")

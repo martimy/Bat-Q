@@ -31,7 +31,7 @@ issues before they cause problems.
 """
 
 
-logging.getLogger("pybatfish").setLevel(logging.ERROR)
+logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 st.set_page_config(layout="wide")
 st.title("Bat-Q")
