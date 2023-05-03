@@ -30,7 +30,6 @@ identify configuration errors, security vulnerabilities, and other potential
 issues before they cause problems.
 """
 
-
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 st.set_page_config(layout="wide")

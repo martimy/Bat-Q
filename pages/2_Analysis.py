@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import time
+import os
 import streamlit as st
 from pybatfish.question import load_questions
 from pybatfish.question import bfq
@@ -25,7 +25,6 @@ from pybatfish.client.commands import (
     bf_init_snapshot,
     bf_set_snapshot
 )
-from utils import test_connection
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
@@ -47,14 +46,14 @@ nan = float("NaN")
 MAXTABS = 6
 
 
-@st.cache_data(experimental_allow_widgets=True)
+# @st.cache_data(experimental_allow_widgets=True)
 def load_net_configs():
-    logging.warning("loading snapshot")
-    return st.sidebar.file_uploader("Upload snapshot", type="zip")
+    return st.sidebar.file_uploader("Upload network snapshot", type="zip")
 
 @st.cache_data
-def init_session(snapshot, network):
-    bf_init_snapshot(config_filename, name=snapshot, overwrite=True)
+def init_session(host, config_file, snapshot, network):
+    bf_session.host = host
+    bf_init_snapshot(config_file, name=snapshot, overwrite=True)
     bf_set_network(network)
     load_questions()
 
@@ -101,88 +100,54 @@ def run_query(question_name):
         st.error(f"Error running query {e}")
 
 
-# def connect_host():
-#     host = st.sidebar.text_input(
-#         "Enter Batfish host:", st.session_state.get("host", "localhost")
-#     )
-
-#     if not st.session_state.hostreachable:
-#         connected, message = test_connection(host)
-#         placeholder = st.sidebar.empty()
-#         if connected:
-#             placeholder.success(message)
-#             st.session_state.host = host
-#             st.session_state.hostreachable = True
-#         else:
-#             placeholder.error(message)
-#         time.sleep(1)  # Wait for 3 seconds
-#         placeholder.empty()
-
-#     status = "Connected!" if st.session_state.hostreachable else "Not Connected!"
-#     st.sidebar.write(f"Hosts Status: {status}")
-
-
+if "filename" not in st.session_state:
+    st.session_state.filename = None
+    
 # Start Page Here
 st.set_page_config(layout="wide")
 st.header("Network Analysis")
 st.markdown(APP)
 
-# Get Batfish host from user
-if "old_host" not in st.session_state:
-    st.session_state.old_host = "localhost"
-
-if "hostreachable" not in st.session_state:
-    st.session_state.hostreachable = False
+bf_host = os.getenv('BATFISH_SERVER') or "127.0.0.1"
+st.sidebar.write(f"Batfish Server: {bf_host}")
 
 
-def update_host_value():
-    st.session_state.old_host = st.session_state.bf_host
-
-# Step 1: Get Batfish host address from user
-st.sidebar.text_input("Enter Batfish host address:",
-                                value=st.session_state.old_host, 
-                                key="bf_host",
-                                on_change=update_host_value)
-
-snap = bf_set_snapshot('First')
-st.write(snap)
+# Check if the snopshot already loaded
+# The API does not allow a better aprroach than exception for now    
+try:
+    bf_set_snapshot("First")
+    st.sidebar.write(f"Config File: {st.session_state.filename.name}")
+    if st.sidebar.button("Remove Snapshot"):
+        st.session_state.filename = load_net_configs()
+except:
+    st.session_state.filename = load_net_configs()
 
 # Step 2: Check if the host is reachable and allow user to upload network snapshot
-connected, message = test_connection(st.session_state.bf_host)
-if connected:
+if st.session_state.filename is not None:
     try:
-        bf_session.host = st.session_state.bf_host
-
-        st.write(bf_extract_facts)
-        # allow user to upload network config files
-        config_filename = load_net_configs()
-        if config_filename is None:
-            st.warning("Please upload a network snapshot to continue.")
+        init_session(bf_host, st.session_state.filename, "First", "Network")
+    
+        # Step 3: Execute a list of questions
+        alldata = st.session_state.get("qlist")
+    
+        if alldata:
+            questions_list = [
+                (item["name"], item["fun"])
+                for category in alldata
+                for item in alldata[category]
+                if item.get("fun")
+            ]
+    
+            tabs = st.tabs([q[0] for q in questions_list])
+            idx = 0
+            for tab in tabs:
+                with tab:
+                    run_query(questions_list[idx][1])
+                    idx += 1
         else:
-            init_session("First", "Network")
-
-            # Step 3: Execute a list of questions
-            alldata = st.session_state.get("qlist")
-
-            if alldata:
-                questions_list = [
-                    (item["name"], item["fun"])
-                    for category in alldata
-                    for item in alldata[category]
-                    if item.get("fun")
-                ]
-
-                tabs = st.tabs([q[0] for q in questions_list])
-                idx = 0
-                for tab in tabs:
-                    with tab:
-                        run_query(questions_list[idx][1])
-                        idx += 1
-
-            else:
-                st.error("Select some questions to proceed.")
-
+            st.warning("Select some questions to proceed.")
     except Exception as e:
-        st.error(f"Unable to connect to Batfish at {st.session_state.bf_host}, {str(e)}")
+        st.error(f"Error: {str(e)}")
 else:
-    st.error(f"Unable to connect to Batfish at {st.session_state.bf_host}")
+    st.warning("Please upload a network configuration files to continue.")
+    
