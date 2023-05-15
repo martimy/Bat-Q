@@ -8,8 +8,9 @@ Batfish:
   - fun: fileParseStatus
     name: Snapshot Input File Parse Status
   - fun: parseWarning
+    input:
+    - aggregateDuplicates
     name: Snapshot Input File Parse Warnings
-
 - category: Configuration Properties
   description: This category of questions enables you to retrieve and process the
     contents of device configurations in a vendor-agnostic manner (except where the
@@ -192,12 +193,34 @@ Batfish:
     by Batfish.
   questions:
   - fun: routes
+    input:
+    - nodes
+    - network
+    - prefixMatchType
+    - protocols
+    - vrfs
+    - rib
     name: Routes
   - fun: bgpRib
+    input:
+    - nodes
+    - network
+    - prefixMatchType
+    - vrfs
+    - status
     name: BGP RIB
   - fun: evpnRib
+    input:
+    - nodes
+    - network
+    - prefixMatchType
+    - vrfs    
     name: EVPN RIB
   - fun: lpmRoutes
+    input:
+    - ip*
+    - nodes
+    - vrfs
     name: Longest Prefix Match
 - category: Packet Forwarding
   description: This category of questions allows you to query how different types
@@ -205,18 +228,45 @@ Batfish:
     You can analyze these aspects in a few different ways.
   questions:
   - fun: traceroute
+    input:
+    - startLocation*
+    - headers*
+    - maxTraces
+    - ignoreFilters
     name: Traceroute
   - fun: bidirectionalTraceroute
+    input:
+    - startLocation*
+    - headers*
+    - maxTraces
+    - ignoreFilters    
     name: Bi-directional Traceroute
   - fun: reachability
+    input:
+    - pathConstraints
+    - headers
+    - actions
+    - maxTraces
+    - invertSearch
+    - ignoreFilters
     name: Reachability
   - fun: bidirectionalReachability
+    input:
+    - pathConstraints
+    - headers*
+    - returnFlowType
     name: Bi-directional Reachability
   - fun: detectLoops
+    input:
+    - maxTraces  
     name: Loop Detection
   - fun: subnetMultipathConsistency
+    input:
+    - maxTraces  
     name: Multipath Consistency for host-subnets
   - fun: loopbackMultipathConsistency
+    input:
+    - maxTraces    
     name: Multipath Consistency for router loopbacks
 - category: Access-lists and firewall rules
   description: This category of questions allows you to analyze the behavior of access
@@ -224,29 +274,65 @@ Batfish:
     (aka verification) that some traffic is or is not allowed.
   questions:
   - fun: filterLineReachability
+    input:
+    - filters
+    - ignoreComposites
     name: Filter Line Reachability
   - fun: searchFilters
+    input:
+    - nodes
+    - filters
+    - headers
+    - action
+    - startLocation
+    - invertSearch
     name: Search Filters
   - fun: testFilters
+    input:
+    - nodes
+    - filters
+    - headers
+    - startLocation
     name: Test Filters
   - fun: findMatchingFilterLines
+    input:
+    - nodes
+    - filters
+    - headers
+    - action
+    - ignoreComposites
     name: Find Matching Filter Lines
 - category: IPSec Tunnels
   description: This category of questions allows you to query IPSec sessions and tunnels.
   questions:
   - fun: ipsecSessionStatus
+    input:
+    - nodes
+    - remoteNodes
+    - status
     name: IPSec Session Status
   - fun: ipsecEdges
+    input:
+    - nodes
+    - remoteNodes    
     name: IPSec Edges
 - category: VXLAN and EVPN
   description: This category of questions allows you to query aspects of VXLAN and
     EVPN configuration and behavior.
   questions:
   - fun: vxlanVniProperties
+    input:
+    - nodes
+    - properties
     name: VXLAN VNI Properties
   - fun: vxlanEdges
+    input:
+    - nodes
+    - remoteNodes
     name: VXLAN Edges
   - fun: evpnL3VniProperties
+    input:
+    - nodes
     name: L3 EVPN VNIs
 - category: Resolving Specifiers
   description: Specifier grammars allow you to specify complex inputs for Batfish
@@ -254,16 +340,36 @@ Batfish:
     by Batfish.
   questions:
   - fun: resolveLocationSpecifier
+    input:
+    - locations*
+    - grammarVersion
     name: Resolve Location Specifier
   - fun: resolveFilterSpecifier
+    input:
+    - filter*
+    - grammarVersion
+    - nodes
     name: Resolve Filter Specifier
   - fun: resolveNodeSpecifier
+    input:
+    - nodes*
+    - grammarVersion
     name: Resolve Node Specifier
   - fun: resolveInterfaceSpecifier
+    input:
+    - interfaces*
+    - grammarVersion
+    - nodes  
     name: Resolve Interface Specifier
   - fun: resolveIpsOfLocationSpecifier
+    input:
+    - locations*
+    - grammarVersion
     name: Resolve IPs from Location Specifier
   - fun: resolveIpSpecifier
+    input:
+    - ips*
+    - grammarVersion
     name: Resolve IP Specifier
 - category: Differential Questions
   description: Differential questions enable you to discover configuration and behavior
@@ -272,6 +378,17 @@ Batfish:
     differential.
   questions:
   - fun: compareFilters
+    input:
+    - nodes
+    - filters
+    - ignoreComposites
     name: Compare Filters
   - fun: differentialReachability
+    input:
+    - pathConstraints
+    - headers
+    - actions
+    - maxTraces
+    - invertSearch
+    - ignoreFilters
     name: Differential Reachability
