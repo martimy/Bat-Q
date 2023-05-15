@@ -45,8 +45,7 @@ st.header("Select Questions")
 questions_help = st.checkbox("Full Help", value=False, key="qshelp")
 
 # Load the YAML file containing all questions
-data = upload_questions()
-data = data["Batfish"]
+bf_questions = upload_questions()["Batfish"]
 
 # Load previously user-saved questions
 saved_questions = st.sidebar.file_uploader(
@@ -54,12 +53,12 @@ saved_questions = st.sidebar.file_uploader(
 )
 
 # Display category selection dropdown
-category_list = [item["category"] for item in data]
+category_list = [item["category"] for item in bf_questions]
 
 # alldata inlcudes all data releated to saved questions
 if saved_questions:
-    alldata = yaml.safe_load(saved_questions)
-    alldata = alldata["questions"]
+    alldata = yaml.safe_load(saved_questions)["questions"]
+    st.session_state.cats = {d: [q['name'] for q in alldata[d]] for d in alldata}
 else:
     alldata = st.session_state.get("qlist", {})
 
@@ -71,13 +70,10 @@ col1, col2 = st.columns(2, gap="medium")
 with col1:
     st.subheader("All Questions")
 
-    for selected_category in data:
+    for selected_category in bf_questions:
 
         category_name = selected_category.get("category", "")
         st.markdown(f"**{category_name}**")
-
-        if category_name not in st.session_state.cats:
-            st.session_state.cats["category_name"] = {}
 
         if questions_help:
             category_desc = selected_category.get("description", "No description!")
@@ -124,3 +120,5 @@ st.sidebar.download_button(
 )
 
 st.session_state.qlist = alldata
+# st.write(st.session_state.cats)
+# st.write(alldata)
