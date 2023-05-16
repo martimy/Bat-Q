@@ -23,7 +23,8 @@ from pybatfish.client.commands import (
     bf_session,
     bf_set_network,
     bf_init_snapshot,
-    bf_set_snapshot
+    bf_fork_snapshot,
+    bf_set_snapshot,
 )
 import logging
 
@@ -44,11 +45,14 @@ Find more information about Batfish questions
 
 nan = float("NaN")
 MAXTABS = 6
-
+BASE_SNAPSHOT_NAME = "First"
+FAIL_SNAPSHOT_NAME = "FAILED"
+BASE_NETWORK_NAME = "NETWORK"
 
 # @st.cache_data(experimental_allow_widgets=True)
 def load_net_configs():
     return st.sidebar.file_uploader("Upload network snapshot", type="zip")
+
 
 @st.cache_data
 def init_session(host, config_file, snapshot, network):
@@ -102,20 +106,20 @@ def run_query(question_name):
 
 if "filename" not in st.session_state:
     st.session_state.filename = None
-    
+
 # Start Page Here
 st.set_page_config(layout="wide")
 st.header("Network Analysis")
 st.markdown(APP)
 
-bf_host = os.getenv('BATFISH_SERVER') or "127.0.0.1"
+bf_host = os.getenv("BATFISH_SERVER") or "127.0.0.1"
 st.sidebar.write(f"Batfish Server: {bf_host}")
 
 
 # Check if the snopshot already loaded
-# The API does not allow a better aprroach than exception for now    
+# The API does not allow a better aprroach than exception for now
 try:
-    bf_set_snapshot("First")
+    bf_set_snapshot(BASE_SNAPSHOT_NAME)
     st.sidebar.write(f"Config File: {st.session_state.filename.name}")
     if st.sidebar.button("Remove Snapshot"):
         st.session_state.filename = load_net_configs()
@@ -125,11 +129,14 @@ except:
 # Check if the host is reachable and allow user to upload network snapshot
 if st.session_state.filename is not None:
     try:
-        init_session(bf_host, st.session_state.filename, "First", "Network")
-    
-        # Execute a list of questions
+        init_session(
+            bf_host, st.session_state.filename, BASE_SNAPSHOT_NAME, BASE_NETWORK_NAME
+        )
+
+        # Get selected questions
         alldata = st.session_state.get("qlist")
-    
+
+        # Run selected questions
         if alldata:
             questions_list = [
                 (item["name"], item["fun"])
@@ -137,17 +144,38 @@ if st.session_state.filename is not None:
                 for item in alldata[category]
                 if item.get("fun")
             ]
-    
+
             tabs = st.tabs([q[0] for q in questions_list])
-            idx = 0
-            for tab in tabs:
+            for idx, tab in enumerate(tabs):
                 with tab:
                     run_query(questions_list[idx][1])
-                    idx += 1
+
+            st.subheader("Failure Tests")
+
+            nodes = bfq.nodeProperties().answer().frame()
+            failed_nodes = st.multiselect("Select failed nodes", nodes["Node"])
+
+            interfaces = bfq.interfaceProperties().answer().frame()
+            failed_interfaces = st.multiselect(
+                "Select failed interfaces", interfaces["Interface"]
+            )
+
+            if failed_nodes or failed_interfaces:
+                bf_fork_snapshot(
+                    BASE_SNAPSHOT_NAME,
+                    FAIL_SNAPSHOT_NAME,
+                    deactivate_nodes=failed_nodes,
+                    deactivate_interfaces=failed_interfaces,
+                    overwrite=True,
+                )
+
+                tabs = st.tabs([q[0] for q in questions_list])
+                for idx, tab in enumerate(tabs):
+                    with tab:
+                        run_query(questions_list[idx][1])
         else:
             st.warning("Select some questions to proceed.")
     except Exception as e:
         st.error(f"Error: {str(e)}")
 else:
     st.warning("Please upload a network configuration files to continue.")
-    

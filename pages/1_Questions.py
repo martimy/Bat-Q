@@ -35,8 +35,15 @@ def extract_questions(questions_data):
     Returns all quations dict with question full name as key.
 
     """
-    return {q['name']: {'fun': q['fun'], 'input': q.get('input'), 'category': cat['category']}
-            for cat in questions_data for q in cat['questions']}
+    return {
+        q["name"]: {
+            "fun": q["fun"],
+            "input": q.get("input"),
+            "category": cat["category"],
+        }
+        for cat in questions_data
+        for q in cat["questions"]
+    }
 
 
 def update_list(key):
@@ -71,8 +78,7 @@ category_list = [item["category"] for item in bf_questions]
 # alldata inlcudes all data releated to saved questions
 if saved_questions:
     alldata = yaml.safe_load(saved_questions)["questions"]
-    st.session_state.cats = {d: [q['name']
-                                 for q in alldata[d]] for d in alldata}
+    st.session_state.cats = {d: [q["name"] for q in alldata[d]] for d in alldata}
 else:
     alldata = st.session_state.get("qlist", {})
 
@@ -90,8 +96,7 @@ with col1:
         st.markdown(f"**{category_name}**")
 
         if questions_help:
-            category_desc = selected_category.get(
-                "description", "No description!")
+            category_desc = selected_category.get("description", "No description!")
             st.markdown(category_desc)
 
         # Get the question list to populate the multiselect widget
@@ -107,7 +112,7 @@ with col1:
             key=category_name,
             default=st.session_state.cats.get(category_name),
             on_change=update_list,
-            kwargs={"key": category_name}, # do not change to 'args'
+            kwargs={"key": category_name},  # do not change to 'args'
         )
 
         # Add the selected question to the displayed list
@@ -123,7 +128,7 @@ with col2:
     st.markdown("These are all the selected questions.")
     s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
     st.markdown("\n".join(s))
-        
+
 
 yaml_list = yaml.dump({"questions": alldata})
 
