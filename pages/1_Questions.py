@@ -29,14 +29,26 @@ def upload_questions():
         return yaml.safe_load(f)
 
 
-def update_list(key=None):
+@st.cache_data
+def extract_questions(questions_data):
+    """
+    Returns all quations dict with question full name as key.
+
+    """
+    return {q['name']: {'fun': q['fun'], 'input': q.get('input'), 'category': cat['category']}
+            for cat in questions_data for q in cat['questions']}
+
+
+def update_list(key):
     st.session_state.cats[key] = st.session_state[key]
 
 
 # Initialize the session state
+# qlist saves the current selection of questions
 if "qlist" not in st.session_state:
     st.session_state.qlist = {}
 
+# cats holds the former selection of questions
 if "cats" not in st.session_state:
     st.session_state.cats = {}
 
@@ -46,6 +58,7 @@ questions_help = st.checkbox("Full Help", value=False, key="qshelp")
 
 # Load the YAML file containing all questions
 bf_questions = upload_questions()["Batfish"]
+# quest_dict = extract_questions(bf_questions)
 
 # Load previously user-saved questions
 saved_questions = st.sidebar.file_uploader(
@@ -58,7 +71,8 @@ category_list = [item["category"] for item in bf_questions]
 # alldata inlcudes all data releated to saved questions
 if saved_questions:
     alldata = yaml.safe_load(saved_questions)["questions"]
-    st.session_state.cats = {d: [q['name'] for q in alldata[d]] for d in alldata}
+    st.session_state.cats = {d: [q['name']
+                                 for q in alldata[d]] for d in alldata}
 else:
     alldata = st.session_state.get("qlist", {})
 
@@ -76,7 +90,8 @@ with col1:
         st.markdown(f"**{category_name}**")
 
         if questions_help:
-            category_desc = selected_category.get("description", "No description!")
+            category_desc = selected_category.get(
+                "description", "No description!")
             st.markdown(category_desc)
 
         # Get the question list to populate the multiselect widget
@@ -92,7 +107,7 @@ with col1:
             key=category_name,
             default=st.session_state.cats.get(category_name),
             on_change=update_list,
-            kwargs={"key": category_name},
+            kwargs={"key": category_name}, # do not change to 'args'
         )
 
         # Add the selected question to the displayed list
@@ -108,17 +123,16 @@ with col2:
     st.markdown("These are all the selected questions.")
     s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
     st.markdown("\n".join(s))
+        
 
-    yaml_list = yaml.dump({"questions": alldata})
+yaml_list = yaml.dump({"questions": alldata})
 
 st.sidebar.download_button(
     label="Save Seletions",
     data=yaml_list,
-    file_name="my_selections.yaml",
+    file_name="select_questions.yaml",
     mime="text/yaml",
     help="Save selected questions to a local YAML file.",
 )
 
 st.session_state.qlist = alldata
-# st.write(st.session_state.cats)
-# st.write(alldata)

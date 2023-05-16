@@ -94,7 +94,7 @@ def run_query(question_name):
 
         # Print removed columns
         if removed:
-            st.write(f"The query returned these empty columns: {removed_str}.")
+            st.markdown(f"The query returned these empty columns:  \n{removed_str}.")
 
     except Exception as e:
         st.error(f"Error running query {e}")
@@ -122,12 +122,12 @@ try:
 except:
     st.session_state.filename = load_net_configs()
 
-# Step 2: Check if the host is reachable and allow user to upload network snapshot
+# Check if the host is reachable and allow user to upload network snapshot
 if st.session_state.filename is not None:
     try:
         init_session(bf_host, st.session_state.filename, "First", "Network")
     
-        # Step 3: Execute a list of questions
+        # Execute a list of questions
         alldata = st.session_state.get("qlist")
     
         if alldata:
