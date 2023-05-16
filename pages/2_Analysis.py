@@ -25,6 +25,7 @@ from pybatfish.client.commands import (
     bf_init_snapshot,
     bf_fork_snapshot,
     bf_set_snapshot,
+    bf_delete_snapshot
 )
 import logging
 
@@ -45,21 +46,34 @@ Find more information about Batfish questions
 
 nan = float("NaN")
 MAXTABS = 6
-BASE_SNAPSHOT_NAME = "First"
-FAIL_SNAPSHOT_NAME = "FAILED"
 BASE_NETWORK_NAME = "NETWORK"
 
-# @st.cache_data(experimental_allow_widgets=True)
-def load_net_configs():
-    return st.sidebar.file_uploader("Upload network snapshot", type="zip")
-
+def upload_snapshot():
+    filename = st.sidebar.file_uploader("Add network snapshot", type="zip")
+    if filename:
+        new_name = filename.name.split(".")[0]
+        try:
+            bf_init_snapshot(filename, name=new_name, overwrite=True)
+            bf_set_snapshot(new_name)
+        except:
+            st.sidebar.error(f"File {filename.name} is not recognized!")
 
 @st.cache_data
-def init_session(host, config_file, snapshot, network):
+def init_host(host, network):
     bf_session.host = host
-    bf_init_snapshot(config_file, name=snapshot, overwrite=True)
     bf_set_network(network)
     load_questions()
+    
+@st.cache_data
+def init_snapshot(config_file, snapshot):
+    bf_session.init_snapshot(config_file, name=snapshot, overwrite=True)
+
+def find_index(lst, item):
+    try:
+        index = lst.index(item)
+        return index
+    except ValueError:
+        return 0
 
 
 def run_query(question_name):
@@ -104,8 +118,8 @@ def run_query(question_name):
         st.error(f"Error running query {e}")
 
 
-if "filename" not in st.session_state:
-    st.session_state.filename = None
+if "activesnap" not in st.session_state:
+    st.session_state.activesnap = None
 
 # Start Page Here
 st.set_page_config(layout="wide")
@@ -115,67 +129,65 @@ st.markdown(APP)
 bf_host = os.getenv("BATFISH_SERVER") or "127.0.0.1"
 st.sidebar.write(f"Batfish Server: {bf_host}")
 
+# try
+init_host(bf_host, BASE_NETWORK_NAME)
+            
+upload_snapshot()
 
-# Check if the snopshot already loaded
-# The API does not allow a better aprroach than exception for now
-try:
-    bf_set_snapshot(BASE_SNAPSHOT_NAME)
-    st.sidebar.write(f"Config File: {st.session_state.filename.name}")
-    if st.sidebar.button("Remove Snapshot"):
-        st.session_state.filename = load_net_configs()
-except:
-    st.session_state.filename = load_net_configs()
+snapshots = bf_session.list_snapshots()
 
-# Check if the host is reachable and allow user to upload network snapshot
-if st.session_state.filename is not None:
-    try:
-        init_session(
-            bf_host, st.session_state.filename, BASE_SNAPSHOT_NAME, BASE_NETWORK_NAME
+# Get selected questions
+alldata = st.session_state.get("qlist")
+
+if snapshots:
+    idx = find_index(snapshots, st.session_state.activesnap) if st.session_state.activesnap else 0
+    select_snapshot = st.sidebar.selectbox("Select Snapshot", snapshots, index=idx)
+    st.session_state.activesnap = bf_set_snapshot(select_snapshot)    
+    st.write(f"Snapshot: {select_snapshot}")
+
+    # Run selected questions
+    if alldata:
+        questions_list = [
+            (item["name"], item["fun"])
+            for category in alldata
+            for item in alldata[category]
+            if item.get("fun")
+        ]
+
+        tabs = st.tabs([q[0] for q in questions_list])
+        for idx, tab in enumerate(tabs):
+            with tab:
+                run_query(questions_list[idx][1])
+
+        st.subheader("Failure Tests")
+
+        nodes = bfq.nodeProperties().answer().frame()
+        failed_nodes = st.multiselect("Select failed nodes", nodes["Node"])
+
+        interfaces = bfq.interfaceProperties().answer().frame()
+        failed_interfaces = st.multiselect(
+            "Select failed interfaces", interfaces["Interface"]
         )
 
-        # Get selected questions
-        alldata = st.session_state.get("qlist")
-
-        # Run selected questions
-        if alldata:
-            questions_list = [
-                (item["name"], item["fun"])
-                for category in alldata
-                for item in alldata[category]
-                if item.get("fun")
-            ]
+        if failed_nodes or failed_interfaces:
+            bf_fork_snapshot(
+                st.session_state.activesnap,
+                st.session_state.activesnap+"_Fail",
+                deactivate_nodes=failed_nodes,
+                deactivate_interfaces=failed_interfaces,
+                overwrite=True,
+            )
 
             tabs = st.tabs([q[0] for q in questions_list])
             for idx, tab in enumerate(tabs):
                 with tab:
                     run_query(questions_list[idx][1])
-
-            st.subheader("Failure Tests")
-
-            nodes = bfq.nodeProperties().answer().frame()
-            failed_nodes = st.multiselect("Select failed nodes", nodes["Node"])
-
-            interfaces = bfq.interfaceProperties().answer().frame()
-            failed_interfaces = st.multiselect(
-                "Select failed interfaces", interfaces["Interface"]
-            )
-
-            if failed_nodes or failed_interfaces:
-                bf_fork_snapshot(
-                    BASE_SNAPSHOT_NAME,
-                    FAIL_SNAPSHOT_NAME,
-                    deactivate_nodes=failed_nodes,
-                    deactivate_interfaces=failed_interfaces,
-                    overwrite=True,
-                )
-
-                tabs = st.tabs([q[0] for q in questions_list])
-                for idx, tab in enumerate(tabs):
-                    with tab:
-                        run_query(questions_list[idx][1])
-        else:
-            st.warning("Select some questions to proceed.")
-    except Exception as e:
-        st.error(f"Error: {str(e)}")
+    else:
+        st.warning("Select some questions to proceed.")
+    
+    if st.sidebar.button("Delete Snapshot"):
+        bf_delete_snapshot(select_snapshot)
+        st.experimental_rerun()
 else:
-    st.warning("Please upload a network configuration files to continue.")
+    st.warning("Please add a snapshot to continue.")
+
