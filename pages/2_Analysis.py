@@ -25,7 +25,7 @@ from pybatfish.client.commands import (
     bf_init_snapshot,
     bf_fork_snapshot,
     bf_set_snapshot,
-    bf_delete_snapshot
+    bf_delete_snapshot,
 )
 import logging
 
@@ -48,6 +48,7 @@ nan = float("NaN")
 MAXTABS = 6
 BASE_NETWORK_NAME = "NETWORK"
 
+
 def upload_snapshot():
     filename = st.sidebar.file_uploader("Add network snapshot", type="zip")
     if filename:
@@ -58,15 +59,18 @@ def upload_snapshot():
         except:
             st.sidebar.error(f"File {filename.name} is not recognized!")
 
+
 @st.cache_data
 def init_host(host, network):
     bf_session.host = host
     bf_set_network(network)
     load_questions()
-    
+
+
 @st.cache_data
 def init_snapshot(config_file, snapshot):
     bf_session.init_snapshot(config_file, name=snapshot, overwrite=True)
+
 
 def find_index(lst, item):
     try:
@@ -131,7 +135,7 @@ st.sidebar.write(f"Batfish Server: {bf_host}")
 
 # try
 init_host(bf_host, BASE_NETWORK_NAME)
-            
+
 upload_snapshot()
 
 snapshots = bf_session.list_snapshots()
@@ -140,9 +144,13 @@ snapshots = bf_session.list_snapshots()
 alldata = st.session_state.get("qlist")
 
 if snapshots:
-    idx = find_index(snapshots, st.session_state.activesnap) if st.session_state.activesnap else 0
+    idx = (
+        find_index(snapshots, st.session_state.activesnap)
+        if st.session_state.activesnap
+        else 0
+    )
     select_snapshot = st.sidebar.selectbox("Select Snapshot", snapshots, index=idx)
-    st.session_state.activesnap = bf_set_snapshot(select_snapshot)    
+    st.session_state.activesnap = bf_set_snapshot(select_snapshot)
     st.write(f"Snapshot: {select_snapshot}")
 
     # Run selected questions
@@ -172,7 +180,7 @@ if snapshots:
         if failed_nodes or failed_interfaces:
             bf_fork_snapshot(
                 st.session_state.activesnap,
-                st.session_state.activesnap+"_Fail",
+                st.session_state.activesnap + "_Fail",
                 deactivate_nodes=failed_nodes,
                 deactivate_interfaces=failed_interfaces,
                 overwrite=True,
@@ -184,10 +192,9 @@ if snapshots:
                     run_query(questions_list[idx][1])
     else:
         st.warning("Select some questions to proceed.")
-    
+
     if st.sidebar.button("Delete Snapshot"):
         bf_delete_snapshot(select_snapshot)
         st.experimental_rerun()
 else:
     st.warning("Please add a snapshot to continue.")
-
