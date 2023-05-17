@@ -46,39 +46,6 @@ Find more information about Batfish questions
 
 nan = float("NaN")
 MAXTABS = 6
-BASE_NETWORK_NAME = "NETWORK"
-
-
-def upload_snapshot():
-    filename = st.sidebar.file_uploader("Add network snapshot", type="zip")
-    if filename:
-        new_name = filename.name.split(".")[0]
-        try:
-            bf_init_snapshot(filename, name=new_name, overwrite=True)
-            bf_set_snapshot(new_name)
-        except:
-            st.sidebar.error(f"File {filename.name} is not recognized!")
-
-
-@st.cache_data
-def init_host(host, network):
-    bf_session.host = host
-    bf_set_network(network)
-    load_questions()
-
-
-@st.cache_data
-def init_snapshot(config_file, snapshot):
-    bf_session.init_snapshot(config_file, name=snapshot, overwrite=True)
-
-
-def find_index(lst, item):
-    try:
-        index = lst.index(item)
-        return index
-    except ValueError:
-        return 0
-
 
 def run_query(question_name):
     """
@@ -119,39 +86,18 @@ def run_query(question_name):
             st.markdown(f"The query returned these empty columns:  \n{removed_str}.")
 
     except Exception as e:
-        st.error(f"Error running query {e}")
-
-
-if "activesnap" not in st.session_state:
-    st.session_state.activesnap = None
+        st.error(f"Error running query: {e}")
 
 # Start Page Here
 st.set_page_config(layout="wide")
 st.header("Network Analysis")
-st.markdown(APP)
-
-bf_host = os.getenv("BATFISH_SERVER") or "127.0.0.1"
-st.sidebar.write(f"Batfish Server: {bf_host}")
-
-# try
-init_host(bf_host, BASE_NETWORK_NAME)
-
-upload_snapshot()
-
-snapshots = bf_session.list_snapshots()
+# st.markdown(APP)
 
 # Get selected questions
 alldata = st.session_state.get("qlist")
 
-if snapshots:
-    idx = (
-        find_index(snapshots, st.session_state.activesnap)
-        if st.session_state.activesnap
-        else 0
-    )
-    select_snapshot = st.sidebar.selectbox("Select Snapshot", snapshots, index=idx)
-    st.session_state.activesnap = bf_set_snapshot(select_snapshot)
-    st.write(f"Snapshot: {select_snapshot}")
+if st.session_state.activesnap:
+    st.sidebar.markdown(f"Snapshot: {st.session_state.activesnap}")
 
     # Run selected questions
     if alldata:
@@ -169,32 +115,32 @@ if snapshots:
 
         st.subheader("Failure Tests")
 
-        nodes = bfq.nodeProperties().answer().frame()
-        failed_nodes = st.multiselect("Select failed nodes", nodes["Node"])
-
-        interfaces = bfq.interfaceProperties().answer().frame()
-        failed_interfaces = st.multiselect(
-            "Select failed interfaces", interfaces["Interface"]
-        )
-
-        if failed_nodes or failed_interfaces:
-            bf_fork_snapshot(
-                st.session_state.activesnap,
-                st.session_state.activesnap + "_Fail",
-                deactivate_nodes=failed_nodes,
-                deactivate_interfaces=failed_interfaces,
-                overwrite=True,
+        try:
+            nodes = bfq.nodeProperties().answer().frame()
+            interfaces = bfq.interfaceProperties().answer().frame()
+    
+            failed_nodes = st.multiselect("Select failed nodes", nodes["Node"])
+            failed_interfaces = st.multiselect(
+                "Select failed interfaces", interfaces["Interface"]
             )
-
-            tabs = st.tabs([q[0] for q in questions_list])
-            for idx, tab in enumerate(tabs):
-                with tab:
-                    run_query(questions_list[idx][1])
+    
+            if failed_nodes or failed_interfaces:
+                bf_fork_snapshot(
+                    st.session_state.activesnap,
+                    st.session_state.activesnap + "_Fail",
+                    deactivate_nodes=failed_nodes,
+                    deactivate_interfaces=failed_interfaces,
+                    overwrite=True,
+                )
+    
+                tabs = st.tabs([q[0] for q in questions_list])
+                for idx, tab in enumerate(tabs):
+                    with tab:
+                        run_query(questions_list[idx][1])
+        except:
+            st.error("Error running query: Probably no active snapshot.")
     else:
         st.warning("Select some questions to proceed.")
 
-    if st.sidebar.button("Delete Snapshot"):
-        bf_delete_snapshot(select_snapshot)
-        st.experimental_rerun()
 else:
     st.warning("Please add a snapshot to continue.")
