@@ -15,18 +15,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import os
 import streamlit as st
-from pybatfish.question import load_questions
 from pybatfish.question import bfq
-from pybatfish.client.commands import (
-    bf_session,
-    bf_set_network,
-    bf_init_snapshot,
-    bf_fork_snapshot,
-    bf_set_snapshot,
-    bf_delete_snapshot,
-)
+from pybatfish.client.commands import bf_fork_snapshot
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
@@ -46,6 +37,7 @@ Find more information about Batfish questions
 
 nan = float("NaN")
 MAXTABS = 6
+
 
 def run_query(question_name):
     """
@@ -88,6 +80,7 @@ def run_query(question_name):
     except Exception as e:
         st.error(f"Error running query: {e}")
 
+
 # Start Page Here
 st.set_page_config(layout="wide")
 st.header("Network Analysis")
@@ -119,12 +112,12 @@ if st.session_state.activesnap:
         try:
             nodes = bfq.nodeProperties().answer().frame()
             interfaces = bfq.interfaceProperties().answer().frame()
-    
+
             failed_nodes = st.multiselect("Select failed nodes", nodes["Node"])
             failed_interfaces = st.multiselect(
                 "Select failed interfaces", interfaces["Interface"]
             )
-    
+
             if failed_nodes or failed_interfaces:
                 bf_fork_snapshot(
                     st.session_state.activesnap,
@@ -133,7 +126,7 @@ if st.session_state.activesnap:
                     deactivate_interfaces=failed_interfaces,
                     overwrite=True,
                 )
-    
+
                 tabs = st.tabs([q[0] for q in questions_list])
                 for idx, tab in enumerate(tabs):
                     with tab:

@@ -19,12 +19,10 @@ limitations under the License.
 import os
 import streamlit as st
 from pybatfish.question import load_questions
-# from pybatfish.question import bfq
 from pybatfish.client.commands import (
     bf_session,
     bf_set_network,
     bf_init_snapshot,
-    bf_fork_snapshot,
     bf_set_snapshot,
     bf_delete_snapshot,
 )
@@ -41,6 +39,7 @@ identify configuration errors, security vulnerabilities, and other potential
 issues before they cause problems.
 """
 BASE_NETWORK_NAME = "NETWORK"
+
 
 def test_connection(host, port=9996):
     """
@@ -72,6 +71,7 @@ def test_connection(host, port=9996):
 
     return success, msg
 
+
 @st.cache_data
 def init_host(host, network):
     bf_session.host = host
@@ -83,6 +83,7 @@ def init_host(host, network):
 def init_snapshot(config_file, snapshot):
     bf_session.init_snapshot(config_file, name=snapshot, overwrite=True)
 
+
 def upload_snapshot():
     filename = st.sidebar.file_uploader("Add network snapshot", type="zip")
     if filename:
@@ -93,19 +94,21 @@ def upload_snapshot():
         except:
             st.sidebar.error(f"File {filename.name} is not recognized!")
 
+
 def find_index(lst, item):
     try:
         index = lst.index(item)
         return index
     except ValueError:
         return 0
-    
+
+
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 
 if "activesnap" not in st.session_state:
     st.session_state.activesnap = None
-    
+
 
 bf_host = os.getenv("BATFISH_SERVER") or "127.0.0.1"
 
@@ -116,12 +119,12 @@ st.markdown(INTRO)
 success, msg = test_connection(bf_host)
 if success:
     init_host(bf_host, BASE_NETWORK_NAME)
-    
+
     upload_snapshot()
     st.markdown(f"**Batfish Server:** {bf_host}")
-    
+
     snapshots = bf_session.list_snapshots()
-    
+
     if snapshots:
         st.header("Loaded Snapshots")
         idx = (
@@ -132,7 +135,7 @@ if success:
         select_snapshot = st.selectbox("Select Snapshot", snapshots, index=idx)
         st.session_state.activesnap = bf_set_snapshot(select_snapshot)
         st.write(f"Snapshot: {select_snapshot}")
-    
+
         if st.sidebar.button("Delete Snapshot"):
             bf_delete_snapshot(select_snapshot)
             st.experimental_rerun()
