@@ -97,7 +97,7 @@ st.header("Network Analysis")
 alldata = st.session_state.get("qlist")
 
 if st.session_state.activesnap:
-    st.sidebar.markdown(f"Snapshot: {st.session_state.activesnap}")
+    st.subheader(f"Snapshot: {st.session_state.activesnap}")
 
     # Run selected questions
     if alldata:
@@ -108,6 +108,7 @@ if st.session_state.activesnap:
             if item.get("fun")
         ]
 
+        # TODO: this generates an exception of questions_list is empty
         tabs = st.tabs([q[0] for q in questions_list])
         for idx, tab in enumerate(tabs):
             with tab:

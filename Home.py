@@ -29,7 +29,7 @@ from pybatfish.client.commands import (
     bf_delete_snapshot,
 )
 import logging
-
+import socket
 
 INTRO = """
 This is a Streamlit app that enables the user to run network analysis 
@@ -42,6 +42,35 @@ issues before they cause problems.
 """
 BASE_NETWORK_NAME = "NETWORK"
 
+def test_connection(host, port=9996):
+    """
+    Test connection to host
+    """
+    # Create a socket object
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Set the timeout to 5 seconds
+    sock.settimeout(5)
+
+    success = False
+    msg = ""
+    # Attempt to connect to the host and port
+    try:
+        result = sock.connect_ex((host, port))
+        if result == 0:
+            success = True
+            msg = f"Host {host} is reachable."
+        else:
+            msg = f"Host {host} is not reachable!"
+
+    except socket.gaierror:
+        msg = "Hostname could not be resolved!"
+    except socket.timeout:
+        msg = "Connection attempt timed out!"
+    finally:
+        sock.close()
+
+    return success, msg
 
 @st.cache_data
 def init_host(host, network):
@@ -81,31 +110,32 @@ if "activesnap" not in st.session_state:
 bf_host = os.getenv("BATFISH_SERVER") or "127.0.0.1"
 
 st.set_page_config(layout="wide")
-
-
-# try
-init_host(bf_host, BASE_NETWORK_NAME)
-
-
 st.title("Bat-Q")
 st.markdown(INTRO)
 
-upload_snapshot()
-st.markdown(f"**Batfish Server:** {bf_host}")
+success, msg = test_connection(bf_host)
+if success:
+    init_host(bf_host, BASE_NETWORK_NAME)
+    
+    upload_snapshot()
+    st.markdown(f"**Batfish Server:** {bf_host}")
+    
+    snapshots = bf_session.list_snapshots()
+    
+    if snapshots:
+        st.header("Loaded Snapshots")
+        idx = (
+            find_index(snapshots, st.session_state.activesnap)
+            if st.session_state.activesnap
+            else 0
+        )
+        select_snapshot = st.selectbox("Select Snapshot", snapshots, index=idx)
+        st.session_state.activesnap = bf_set_snapshot(select_snapshot)
+        st.write(f"Snapshot: {select_snapshot}")
+    
+        if st.sidebar.button("Delete Snapshot"):
+            bf_delete_snapshot(select_snapshot)
+            st.experimental_rerun()
 
-snapshots = bf_session.list_snapshots()
-
-if snapshots:
-    st.header("Loaded Snapshots")
-    idx = (
-        find_index(snapshots, st.session_state.activesnap)
-        if st.session_state.activesnap
-        else 0
-    )
-    select_snapshot = st.selectbox("Select Snapshot", snapshots, index=idx)
-    st.session_state.activesnap = bf_set_snapshot(select_snapshot)
-    st.write(f"Snapshot: {select_snapshot}")
-
-    if st.sidebar.button("Delete Snapshot"):
-        bf_delete_snapshot(select_snapshot)
-        st.experimental_rerun()
+else:
+    st.error(msg)
