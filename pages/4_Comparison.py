@@ -40,14 +40,15 @@ MAXTABS = 6
 
 # Start Page Here
 st.set_page_config(layout="wide")
-st.header("Network Analysis")
+st.header("Comparisons")
 # st.markdown(APP)
 
 # Get selected questions
 alldata = st.session_state.get("qlist")
 
-if "activesnap" in st.session_state:
-    st.subheader(f"Snapshot: {st.session_state.activesnap['name']}")
+if "activesnap" in st.session_state and "altsnap" in st.session_state:
+    st.subheader(f"Refrence snapshot: {st.session_state.activesnap['name']}")
+    st.subheader(f"Alternate snapshot: {st.session_state.altsnap['name']}")
 
     # Run selected questions
     if alldata:
@@ -62,10 +63,16 @@ if "activesnap" in st.session_state:
         tabs = st.tabs([q[0] for q in questions_list])
         for idx, tab in enumerate(tabs):
             with tab:
-                run_query(questions_list[idx][1])
+                run_query(
+                    questions_list[idx][1],
+                    (
+                        st.session_state.activesnap["name"],
+                        st.session_state.altsnap["name"],
+                    ),
+                )
 
     else:
         st.warning("Select some questions to proceed.")
 
 else:
-    st.warning("Please add a snapshot to continue.")
+    st.warning("Please add two snapshots to continue.")

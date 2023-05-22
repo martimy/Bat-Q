@@ -109,6 +109,8 @@ logging.getLogger("pybatfish").setLevel(logging.WARNING)
 if "activesnap" not in st.session_state:
     st.session_state.activesnap = {}
 
+if "altsnap" not in st.session_state:
+    st.session_state.altsnap = {}
 
 bf_host = os.getenv("BATFISH_SERVER") or "127.0.0.1"
 
@@ -126,17 +128,33 @@ if success:
     snapshots = bf_session.list_snapshots()
 
     if snapshots:
-        st.header("Loaded Snapshots")
+        st.header("Select Snapshots")
         idx = (
             find_index(snapshots, st.session_state.activesnap["name"])
             if st.session_state.activesnap
             else 0
         )
-        select_snapshot = st.selectbox("Select Snapshot", snapshots, index=idx)
+
+        select_snapshot = st.selectbox(
+            "Main Snapshot", snapshots, index=idx, help="This is the base snapshot."
+        )
         st.session_state.activesnap["name"] = bf_set_snapshot(select_snapshot)
         st.session_state.activesnap["failednodes"] = []
         st.session_state.activesnap["failedinfs"] = []
         # st.write(f"Snapshot: {select_snapshot}")
+
+        idx2 = (
+            find_index(snapshots, st.session_state.altsnap["name"])
+            if st.session_state.altsnap
+            else 0
+        )
+
+        st.session_state.altsnap["name"] = st.selectbox(
+            "Alternate Snapshot",
+            snapshots,
+            index=idx2,
+            help="This snapshot is used for comparsions.",
+        )
 
         if st.sidebar.button("Delete Snapshot"):
             bf_delete_snapshot(select_snapshot)
