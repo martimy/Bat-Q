@@ -30,9 +30,9 @@ def upload_questions():
 
 
 @st.cache_data
-def extract_questions(questions_data):
+def get_questions_dict(questions_data):
     """
-    Returns all quations dict with question full name as key.
+    Returns all questions dict with question full name as key.
 
     """
     return {
@@ -44,6 +44,26 @@ def extract_questions(questions_data):
         for cat in questions_data
         for q in cat["questions"]
     }
+
+
+@st.cache_data
+def get_categories_dict(dict_data):
+    """
+    Returns all categories dict with category name as key.
+
+    """
+    result = {}
+    for question in dict_data:
+        qdata = dict_data[question]
+        cat_qlist = result.setdefault(qdata["category"], [])
+        cat_qlist.append(
+            {
+                "name": question,
+                "input": qdata["input"],
+                "fun": qdata["fun"],
+            }
+        )
+    return result
 
 
 def update_list(key):
@@ -65,15 +85,18 @@ questions_help = st.checkbox("Full Help", value=False, key="qshelp")
 
 # Load the YAML file containing all questions
 bf_questions = upload_questions()["Batfish"]
-# quest_dict = extract_questions(bf_questions)
+quest_dict = get_questions_dict(bf_questions)
+# st.write(quest_dict)
+cat_dict = get_categories_dict(quest_dict)
+# st.write(cat_dict)
+
+# Display category selection dropdown
+category_list = [item["category"] for item in bf_questions]
 
 # Load previously user-saved questions
 saved_questions = st.sidebar.file_uploader(
     "Upload Questions", type="yaml", help="Load saved questions."
 )
-
-# Display category selection dropdown
-category_list = [item["category"] for item in bf_questions]
 
 # alldata inlcudes all data releated to saved questions
 if saved_questions:
