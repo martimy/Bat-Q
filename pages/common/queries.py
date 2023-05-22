@@ -24,7 +24,7 @@ This usually means that the query is not applicable to the network.
 """
 
 
-def run_query(question_name):
+def run_query(question_name, snapshots=None):
     """
     Run Batfish question.
     """
@@ -32,7 +32,14 @@ def run_query(question_name):
     try:
         # Run query
         fun = getattr(bfq, question_name)
-        result = fun().answer().frame()
+        if snapshots:
+            result = (
+                fun()
+                .answer(snapshot=snapshots[1], reference_snapshot=snapshots[0])
+                .frame()
+            )
+        else:
+            result = fun().answer().frame()
 
         # Replace empty lists with NaN values
         for c in result.columns:

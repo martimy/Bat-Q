@@ -46,7 +46,7 @@ st.header("Network Analysis")
 # Get selected questions
 alldata = st.session_state.get("qlist")
 
-if st.session_state.activesnap:
+if "activesnap" in st.session_state:
     st.subheader(f"Snapshot: {st.session_state.activesnap['name']}")
 
     # Run selected questions
