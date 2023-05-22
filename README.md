@@ -38,8 +38,7 @@ The simplest and most recommended method to install Batfish server is to run a D
 
 These are instruction on how to install Batfish on a Linux machine. This machine needs to have internet connectivity in order to be able to install Docker and pull down the Batfish container.
 
-1. Install Docker on the CentOS Linux machine, as demonstrated at this [URL](https://docs.docker.com/desktop/install/ubuntu/).
-
+1. Install Docker on the Linux machine, as demonstrated at this [URL](https://docs.docker.com/desktop/install/ubuntu/).
 
 2. Once Docker is installed and operational, download the Docker container:
 
