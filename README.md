@@ -16,7 +16,7 @@ pip3 install -r requirements.txt
 To use the app, simply run the following command:
 
 ```bash
-streamlit run batq.py
+streamlit run Home.py
 ```
 
 This will open a Streamlit app in your default web browser.
