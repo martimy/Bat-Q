@@ -28,7 +28,7 @@ This usually means that the query is not applicable to the network.
 def get_params(param_list):
     qargs = {}
     for param in param_list:
-        print(f"Param: {param}")
+        # print(f"Param: {param}")
         if param.get("name") and param.get("value"):
             # we have a name an value
             param_type = param.get("type")
@@ -58,7 +58,7 @@ def run_query(question, snapshots=None):
             qargs = get_params(question.get("input")) if question.get("input") else None
             # get_params may also return an empty dict
             if qargs:
-                print(f"args: {qargs}")
+                # print(f"args: {qargs}")
                 result = fun(**qargs).answer().frame()
             else:
                 result = fun().answer().frame()

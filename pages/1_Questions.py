@@ -66,11 +66,9 @@ def get_categories_dict(dict_data):
     return result
 
 
-@st.cache_data
 def get_cat_quest_dict(dict_data):
     """
     Returns all questions grouped in categories.
-
     """
     result = {}
     for question in dict_data:
@@ -94,6 +92,7 @@ if "cats" not in st.session_state:
     st.session_state.cats = {}
 
 # The page starts here
+st.set_page_config(layout="wide")
 st.header("Select Questions")
 questions_help = st.checkbox("Full Help", value=False, key="qshelp")
 
@@ -115,12 +114,12 @@ saved_questions = st.sidebar.file_uploader(
 # qlist inlcudes all data releated to saved questions
 if saved_questions:
     qlist = yaml.safe_load(saved_questions)["questions"]
-    # st.session_state.cats = {d: [q["name"] for q in qlist[d]] for d in qlist}
     st.session_state.cats = get_cat_quest_dict(qlist)
 else:
     qlist = st.session_state.get("qlist", {})
 
 all_selected = []
+new_qlist = {}
 
 # Split the screen into two columns
 col1, col2 = st.columns(2, gap="medium")
@@ -159,15 +158,11 @@ with col1:
 
         # Add the selected question to the displayed list
         all_selected.extend(selected_quetions)
-        # qlist[category_name] = [
-        #     item
-        #     for item in selected_category.get("questions")
-        #     if item["name"] in selected_quetions
-        # ]
-
         for question in selected_quetions:
-            if question not in qlist:
-                qlist[question] = quest_dict[question]
+            if question in qlist:
+                new_qlist[question] = qlist[question]
+            else:
+                new_qlist[question] = quest_dict[question]
 
 with col2:
     st.subheader("Selected Questions")
@@ -175,6 +170,7 @@ with col2:
     s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
     st.markdown("\n".join(s))
 
+qlist = new_qlist
 
 yaml_list = yaml.dump({"questions": qlist})
 
@@ -187,3 +183,4 @@ st.sidebar.download_button(
 )
 
 st.session_state.qlist = qlist
+# st.session_state.cats = qlist
