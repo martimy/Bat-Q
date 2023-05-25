@@ -17,7 +17,9 @@ limitations under the License.
 
 import streamlit as st
 from pages.common.queries import run_query
+from pages.common.formatter import format_result, json_to_dataframe
 import logging
+
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 NO_DATA = """No data available!
@@ -34,9 +36,8 @@ Find more information about Batfish questions
 [here](https://batfish.readthedocs.io/en/latest/index.html).
 """
 
-nan = float("NaN")
+# nan = float("NaN")
 MAXTABS = 6
-
 
 # Start Page Here
 st.set_page_config(layout="wide")
@@ -56,7 +57,28 @@ if "activesnap" in st.session_state:
         tabs = st.tabs(q_names)
         for idx, tab in enumerate(tabs):
             with tab:
-                run_query(qlist[q_names[idx]])
+                answer = run_query(qlist[q_names[idx]])
+
+                try:
+                    filtered_df, removed = format_result(answer.frame())
+
+                    # Print the result
+                    if filtered_df.empty:
+                        st.warning(NO_DATA)
+                    else:
+                        st.dataframe(filtered_df, use_container_width=True)
+
+                    # Print removed columns
+                    if removed:
+                        removed_str = ", ".join(list(removed))
+                        st.markdown(
+                            f"The query returned these empty columns:  \n{removed_str}."
+                        )
+                except:
+                    # st.write(answer.rows[0])
+                    # markdown_table = json_to_markdown_table(answer.rows[0]["Traces"])
+                    fr = json_to_dataframe(answer.rows[0]["Traces"])
+                    st.dataframe(fr)
 
     else:
         st.warning("Select some questions to proceed.")
