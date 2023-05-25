@@ -44,27 +44,21 @@ st.header("Comparisons")
 # st.markdown(APP)
 
 # Get selected questions
-alldata = st.session_state.get("qlist")
+qlist = st.session_state.get("qlist")
 
 if "activesnap" in st.session_state and "altsnap" in st.session_state:
     st.subheader(f"Refrence snapshot: {st.session_state.activesnap['name']}")
     st.subheader(f"Alternate snapshot: {st.session_state.altsnap['name']}")
 
     # Run selected questions
-    if alldata:
-        questions_list = [
-            (item["name"], item["fun"])
-            for category in alldata
-            for item in alldata[category]
-            if item.get("fun")
-        ]
-
+    if qlist:
         # TODO: this generates an exception of questions_list is empty
-        tabs = st.tabs([q[0] for q in questions_list])
+        q_names = [q for q in qlist]
+        tabs = st.tabs(q_names)
         for idx, tab in enumerate(tabs):
             with tab:
                 run_query(
-                    questions_list[idx][1],
+                    qlist[q_names[idx]],
                     (
                         st.session_state.activesnap["name"],
                         st.session_state.altsnap["name"],

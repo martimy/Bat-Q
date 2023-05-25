@@ -66,6 +66,18 @@ def get_categories_dict(dict_data):
     return result
 
 
+def get_cat_quest_dict(dict_data):
+    """
+    Returns all questions grouped in categories.
+    """
+    result = {}
+    for question in dict_data:
+        qdata = dict_data[question]
+        cat_qlist = result.setdefault(qdata["category"], [])
+        cat_qlist.append(question)
+    return result
+
+
 def update_list(key):
     st.session_state.cats[key] = st.session_state[key]
 
@@ -80,6 +92,7 @@ if "cats" not in st.session_state:
     st.session_state.cats = {}
 
 # The page starts here
+st.set_page_config(layout="wide")
 st.header("Select Questions")
 questions_help = st.checkbox("Full Help", value=False, key="qshelp")
 
@@ -87,7 +100,7 @@ questions_help = st.checkbox("Full Help", value=False, key="qshelp")
 bf_questions = upload_questions()["Batfish"]
 quest_dict = get_questions_dict(bf_questions)
 # st.write(quest_dict)
-cat_dict = get_categories_dict(quest_dict)
+# cat_dict = get_categories_dict(quest_dict)
 # st.write(cat_dict)
 
 # Display category selection dropdown
@@ -98,14 +111,15 @@ saved_questions = st.sidebar.file_uploader(
     "Upload Questions", type="yaml", help="Load saved questions."
 )
 
-# alldata inlcudes all data releated to saved questions
+# qlist inlcudes all data releated to saved questions
 if saved_questions:
-    alldata = yaml.safe_load(saved_questions)["questions"]
-    st.session_state.cats = {d: [q["name"] for q in alldata[d]] for d in alldata}
+    qlist = yaml.safe_load(saved_questions)["questions"]
+    st.session_state.cats = get_cat_quest_dict(qlist)
 else:
-    alldata = st.session_state.get("qlist", {})
+    qlist = st.session_state.get("qlist", {})
 
 all_selected = []
+new_qlist = {}
 
 # Split the screen into two columns
 col1, col2 = st.columns(2, gap="medium")
@@ -113,22 +127,26 @@ col1, col2 = st.columns(2, gap="medium")
 with col1:
     st.subheader("All Questions")
 
+    # Dispplay a multiselect list for each question category
     for selected_category in bf_questions:
 
         category_name = selected_category.get("category", "")
         st.markdown(f"**{category_name}**")
 
+        # Show description of the category if required
         if questions_help:
             category_desc = selected_category.get("description", "No description!")
             st.markdown(category_desc)
 
         # Get the question list to populate the multiselect widget
+        # from the main questions database
         questions_list = [
             item["name"]
             for item in selected_category.get("questions")
             if item.get("name")
         ]
 
+        # Get the selected questions
         selected_quetions = st.multiselect(
             "Select a Question",
             questions_list,
@@ -140,11 +158,11 @@ with col1:
 
         # Add the selected question to the displayed list
         all_selected.extend(selected_quetions)
-        alldata[category_name] = [
-            item
-            for item in selected_category.get("questions")
-            if item["name"] in selected_quetions
-        ]
+        for question in selected_quetions:
+            if question in qlist:
+                new_qlist[question] = qlist[question]
+            else:
+                new_qlist[question] = quest_dict[question]
 
 with col2:
     st.subheader("Selected Questions")
@@ -152,8 +170,9 @@ with col2:
     s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
     st.markdown("\n".join(s))
 
+qlist = new_qlist
 
-yaml_list = yaml.dump({"questions": alldata})
+yaml_list = yaml.dump({"questions": qlist})
 
 st.sidebar.download_button(
     label="Save Seletions",
@@ -163,4 +182,5 @@ st.sidebar.download_button(
     help="Save selected questions to a local YAML file.",
 )
 
-st.session_state.qlist = alldata
+st.session_state.qlist = qlist
+# st.session_state.cats = qlist

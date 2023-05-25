@@ -9,7 +9,7 @@ Batfish:
     name: Snapshot Input File Parse Status
   - fun: parseWarning
     input:
-    - aggregateDuplicates
+    - name: aggregateDuplicates
     name: Snapshot Input File Parse Warnings
 - category: Configuration Properties
   description: This category of questions enables you to retrieve and process the
@@ -19,107 +19,107 @@ Batfish:
   questions:
   - fun: nodeProperties
     input:
-    - nodes
-    - properties
+    - name: nodes
+    - name: properties
     name: Node Properties
   - fun: interfaceProperties
     input:
-    - nodes
-    - interfaces
-    - properties
-    - excludeShutInterfaces
+    - name: nodes
+    - name: interfaces
+    - name: properties
+    - name: excludeShutInterfaces
     name: Interface Properties
   - fun: bgpProcessConfiguration
     input:
-    - nodes
-    - properties
+    - name: nodes
+    - name: properties
     name: BGP Process Configuration
   - fun: bgpPeerConfiguration
     input:
-    - nodes
-    - properties
+    - name: nodes
+    - name: properties
     name: BGP Peer Configuration
   - fun: hsrpProperties
     input:
-    - nodes
-    - interfaces
-    - virtualAddresses
-    - excludeShutInterfaces
+    - name: nodes
+    - name: interfaces
+    - name: virtualAddresses
+    - name: excludeShutInterfaces
     name: HSRP Properties
   - fun: ospfProcessConfiguration
     input:
-    - nodes
-    - properties
+    - name: nodes
+    - name: properties
     name: OSPF Process Configuration
   - fun: ospfInterfaceConfiguration
     input:
-    - nodes
-    - properties
+    - name: nodes
+    - name: properties
     name: OSPF Interface Configuration
   - fun: ospfAreaConfiguration
     input:
-    - nodes
+    - name: nodes
     name: OSPF Area Configuration
   - fun: mlagProperties
     input:
-    - nodes
-    - mlagIds
+    - name: nodes
+    - name: mlagIds
     name: Multi-chassis LAG
   - fun: ipOwners
     input:
-    - duplicatesOnly
+    - name: duplicatesOnly
     name: IP Owners
   - fun: namedStructures
     input:
-    - nodes
-    - structureTypes
-    - structureNames
-    - ignoreGenerated
-    - indicatePresence
+    - name: nodes
+    - name: structureTypes
+    - name: structureNames
+    - name: ignoreGenerated
+    - name: indicatePresence
     name: Named Structures
   - fun: definedStructures
     input:
-    - filename
-    - nodes
-    - names
-    - types
+    - name: filename
+    - name: nodes
+    - name: names
+    - name: types
     name: Defined Structures
   - fun: referencedStructures
     input:
-    - nodes
-    - names
-    - types
+    - name: nodes
+    - name: names
+    - name: types
     name: Referenced Structures
   - fun: undefinedReferences
     input:
-    - nodes
+    - name: nodes
     name: Undefined References
   - fun: unusedStructures
     input:
-    - nodes
+    - name: nodes
     name: Unused Structures
   - fun: switchedVlanProperties
     input:
-    - nodes
-    - interfaces
-    - vlans
-    - excludeShutInterfaces
+    - name: nodes
+    - name: interfaces
+    - name: vlans
+    - name: excludeShutInterfaces
     name: VLAN Properties
   - fun: vrrpProperties
     input:
-    - nodes
-    - interfaces
-    - virtualAddresses
-    - excludeShutInterfaces
+    - name: nodes
+    - name: interfaces
+    - name: virtualAddresses
+    - name: excludeShutInterfaces
     name: VRRP Properties
   - fun: a10VirtualServerConfiguration
     input:
-    - nodes
-    - virtualServerIps
+    - name: nodes
+    - name: virtualServerIps
     name: A10 Virtual Server Configuration
   - fun: f5BigipVipConfiguration
     input:
-    - nodes
+    - name: nodes
     name: F5 BIG-IP VIP Configuration
 - category: Topology
   description: This category of questions is intended to retrieve the network topology
@@ -129,13 +129,13 @@ Batfish:
   questions:
   - fun: userProvidedLayer1Edges
     input:
-    - nodes
-    - remoteNodes
+    - name: nodes
+    - name: remoteNodes
     name: User Provided Layer 1 Topology
   - fun: layer3Edges
     input:
-    - nodes
-    - remoteNodes
+    - name: nodes
+    - name: remoteNodes
     name: Layer 3 Topology
 - category: Routing Protocol Sessions and Policies
   description: This category of questions reveals information regarding which routing
@@ -144,49 +144,49 @@ Batfish:
   questions:
   - fun: bgpSessionCompatibility
     input:
-    - nodes
-    - remoteNodes
-    - status
-    - type
+    - name: nodes
+    - name: remoteNodes
+    - name: status
+    - name: type
     name: BGP Session Compatibility
   - fun: bgpSessionStatus
     input:
-    - nodes
-    - remoteNodes
-    - status
-    - type
+    - name: nodes
+    - name: remoteNodes
+    - name: status
+    - name: type
     name: BGP Session Status
   - fun: bgpEdges
     input:
-    - nodes
-    - remoteNodes
+    - name: nodes
+    - name: remoteNodes
     name: BGP Edges
   - fun: ospfSessionCompatibility
     input:
-    - nodes
-    - remoteNodes
-    - statuses
+    - name: nodes
+    - name: remoteNodes
+    - name: statuses
     name: OSPF Session Compatibility
   - fun: ospfEdges
     input:
-    - nodes
-    - remoteNodes
+    - name: nodes
+    - name: remoteNodes
     name: OSPF Edges
   - fun: testRoutePolicies
     input:
-    - nodes
-    - policies
+    - name: nodes
+    - name: policies
     - inputRoutes
     - direction
     name: Test Route Policies
   - fun: searchRoutePolicies
     input:
-    - nodes
-    - policies
-    - inputConstraints
-    - action
-    - outputConstraints
-    - perPath
+    - name: nodes
+    - name: policies
+    - name: inputConstraints
+    - name: action
+    - name: outputConstraints
+    - name: perPath
     name: Search Route Policies
 - category: Routing and Forwarding Tables
   description: This category of questions allows you to query the RIBs and FIBs computed
@@ -194,33 +194,34 @@ Batfish:
   questions:
   - fun: routes
     input:
-    - nodes
-    - network
-    - prefixMatchType
-    - protocols
-    - vrfs
-    - rib
+    - name: nodes
+    - name: network
+    - name: prefixMatchType
+    - name: protocols
+    - name: vrfs
+    - name: rib
     name: Routes
   - fun: bgpRib
     input:
-    - nodes
-    - network
-    - prefixMatchType
-    - vrfs
-    - status
+    - name: nodes
+    - name: network
+    - name: prefixMatchType
+    - name: vrfs
+    - name: status
     name: BGP RIB
   - fun: evpnRib
     input:
-    - nodes
-    - network
-    - prefixMatchType
-    - vrfs    
+    - name: nodes
+    - name: network
+    - name: prefixMatchType
+    - name: vrfs    
     name: EVPN RIB
   - fun: lpmRoutes
     input:
-    - ip*
-    - nodes
-    - vrfs
+    - name: ip
+      optional: false
+    - name: nodes
+    - name: vrfs
     name: Longest Prefix Match
 - category: Packet Forwarding
   description: This category of questions allows you to query how different types
@@ -229,44 +230,49 @@ Batfish:
   questions:
   - fun: traceroute
     input:
-    - startLocation*
-    - headers*
-    - maxTraces
-    - ignoreFilters
+    - name: startLocation
+      optional: false
+    - name: headers
+      optional: false
+    - name: maxTraces
+    - name: ignoreFilters
     name: Traceroute
   - fun: bidirectionalTraceroute
     input:
-    - startLocation*
-    - headers*
-    - maxTraces
-    - ignoreFilters    
+    - name: startLocation
+      optional: false
+    - name: headers
+      optional: false
+    - name: maxTraces
+    - name: ignoreFilters    
     name: Bi-directional Traceroute
   - fun: reachability
     input:
-    - pathConstraints
-    - headers
-    - actions
-    - maxTraces
-    - invertSearch
-    - ignoreFilters
+    - name: pathConstraints
+    - name: headers
+    - name: actions
+    - name: maxTraces
+    - name: invertSearch
+    - name: ignoreFilters
     name: Reachability
   - fun: bidirectionalReachability
     input:
-    - pathConstraints
-    - headers*
-    - returnFlowType
+    - name: pathConstraints
+    - name: headers
+      optional: false
+    - name: returnFlowType
     name: Bi-directional Reachability
   - fun: detectLoops
     input:
-    - maxTraces  
+    - name: maxTraces  
     name: Loop Detection
   - fun: subnetMultipathConsistency
     input:
-    - maxTraces  
+    - name: maxTraces  
     name: Multipath Consistency for host-subnets
   - fun: loopbackMultipathConsistency
     input:
-    - maxTraces    
+    - name: maxTraces    
     name: Multipath Consistency for router loopbacks
 - category: Access-lists and firewall rules
   description: This category of questions allows you to analyze the behavior of access
@@ -275,46 +281,46 @@ Batfish:
   questions:
   - fun: filterLineReachability
     input:
-    - filters
-    - ignoreComposites
+    - name: filters
+    - name: ignoreComposites
     name: Filter Line Reachability
   - fun: searchFilters
     input:
-    - nodes
-    - filters
-    - headers
-    - action
-    - startLocation
-    - invertSearch
+    - name: nodes
+    - name: filters
+    - name: headers
+    - name: action
+    - name: startLocation
+    - name: invertSearch
     name: Search Filters
   - fun: testFilters
     input:
-    - nodes
-    - filters
-    - headers
-    - startLocation
+    - name: nodes
+    - name: filters
+    - name: headers
+    - name: startLocation
     name: Test Filters
   - fun: findMatchingFilterLines
     input:
-    - nodes
-    - filters
-    - headers
-    - action
-    - ignoreComposites
+    - name: nodes
+    - name: filters
+    - name: headers
+    - name: action
+    - name: ignoreComposites
     name: Find Matching Filter Lines
 - category: IPSec Tunnels
   description: This category of questions allows you to query IPSec sessions and tunnels.
   questions:
   - fun: ipsecSessionStatus
     input:
-    - nodes
-    - remoteNodes
-    - status
+    - name: nodes
+    - name: remoteNodes
+    - name: status
     name: IPSec Session Status
   - fun: ipsecEdges
     input:
-    - nodes
-    - remoteNodes    
+    - name: nodes
+    - name: remoteNodes    
     name: IPSec Edges
 - category: VXLAN and EVPN
   description: This category of questions allows you to query aspects of VXLAN and
@@ -322,17 +328,17 @@ Batfish:
   questions:
   - fun: vxlanVniProperties
     input:
-    - nodes
-    - properties
+    - name: nodes
+    - name: properties
     name: VXLAN VNI Properties
   - fun: vxlanEdges
     input:
-    - nodes
-    - remoteNodes
+    - name: nodes
+    - name: remoteNodes
     name: VXLAN Edges
   - fun: evpnL3VniProperties
     input:
-    - nodes
+    - name: nodes
     name: L3 EVPN VNIs
 - category: Resolving Specifiers
   description: Specifier grammars allow you to specify complex inputs for Batfish
@@ -341,35 +347,41 @@ Batfish:
   questions:
   - fun: resolveLocationSpecifier
     input:
-    - locations*
-    - grammarVersion
+    - name: locations
+      optional: false
+    - name: grammarVersion
     name: Resolve Location Specifier
   - fun: resolveFilterSpecifier
     input:
-    - filter*
-    - grammarVersion
-    - nodes
+    - name: filter
+      optional: false
+    - name: grammarVersion
+    - name: nodes
     name: Resolve Filter Specifier
   - fun: resolveNodeSpecifier
     input:
-    - nodes*
-    - grammarVersion
+    - name: nodes
+      optional: false
+    - name: grammarVersion
     name: Resolve Node Specifier
   - fun: resolveInterfaceSpecifier
     input:
-    - interfaces*
-    - grammarVersion
-    - nodes  
+    - name: interfaces
+      optional: false
+    - name: grammarVersion
+    - name: nodes  
     name: Resolve Interface Specifier
   - fun: resolveIpsOfLocationSpecifier
     input:
-    - locations*
-    - grammarVersion
+    - name: locations
+      optional: false
+    - name: grammarVersion
     name: Resolve IPs from Location Specifier
   - fun: resolveIpSpecifier
     input:
-    - ips*
-    - grammarVersion
+    - name: ips
+      optional: false
+    - name: grammarVersion
     name: Resolve IP Specifier
 - category: Differential Questions
   description: Differential questions enable you to discover configuration and behavior
@@ -379,16 +391,16 @@ Batfish:
   questions:
   - fun: compareFilters
     input:
-    - nodes
-    - filters
-    - ignoreComposites
+    - name: nodes
+    - name: filters
+    - name: ignoreComposites
     name: Compare Filters
   - fun: differentialReachability
     input:
-    - pathConstraints
-    - headers
-    - actions
-    - maxTraces
-    - invertSearch
-    - ignoreFilters
+    - name: pathConstraints
+    - name: headers
+    - name: actions
+    - name: maxTraces
+    - name: invertSearch
+    - name: ignoreFilters
     name: Differential Reachability
