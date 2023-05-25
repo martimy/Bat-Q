@@ -17,11 +17,26 @@ limitations under the License.
 
 import streamlit as st
 from pybatfish.question import bfq
+from pybatfish.datamodel import PathConstraints, HeaderConstraints
 
 nan = float("NaN")
 NO_DATA = """No data available!
 This usually means that the query is not applicable to the network.
 """
+
+
+def get_params(param_list):
+    qargs = {}
+    for param in param_list:
+        print(f"Param: {param}")
+        if param.get("name") and param.get("value"):
+            # we have a name an value
+            param_type = param.get("type")
+            if param_type == "HeaderConstraints":
+                qargs[param["name"]] = HeaderConstraints(**param["value"])
+            else:
+                qargs[param["name"]] = param["value"]
+    return qargs
 
 
 def run_query(question, snapshots=None):
@@ -40,62 +55,10 @@ def run_query(question, snapshots=None):
                 .frame()
             )
         else:
-            result = fun().answer().frame()
-
-        # Replace empty lists with NaN values
-        for c in result.columns:
-            result[c] = result[c].apply(
-                lambda y: nan if isinstance(y, list) and len(y) == 0 else y
-            )
-
-        # Replace empty strings with NaN values
-        result = result.replace("", nan)
-
-        # Drop all empty columns
-        filtered_df = result.dropna(axis=1, how="all")
-        filtered_df = filtered_df.replace(nan, "")
-
-        removed = set(result.columns) - set(filtered_df.columns)
-        removed_str = ", ".join(list(removed))
-
-        # Print the result
-        if filtered_df.empty:
-            st.warning(NO_DATA)
-        else:
-            st.dataframe(filtered_df, use_container_width=True)
-            # st.session_state.previous.insert(
-            #     0, {"name": question_name, "result": filtered_df, "removed": removed_str, "favorite": False})
-
-        # Print removed columns
-        if removed:
-            st.markdown(f"The query returned these empty columns:  \n{removed_str}.")
-
-    except Exception as e:
-        st.error(f"Error running query: {e}")
-
-
-def run_query_ext(question, snapshots=None):
-    """
-    Run Batfish question.
-    """
-
-    question_name = question["fun"]
-    try:
-        # Run query
-        fun = getattr(bfq, question_name)
-        if snapshots:
-            result = (
-                fun()
-                .answer(snapshot=snapshots[1], reference_snapshot=snapshots[0])
-                .frame()
-            )
-        else:
-            qargs = {}
-            if question.get("input"):
-                for param in question["input"]:
-                    if param.get("name") and param.get("value"):
-                        qargs[param["name"]] = param["value"]
+            qargs = get_params(question.get("input")) if question.get("input") else None
+            # get_params may also return an empty dict
             if qargs:
+                print(f"args: {qargs}")
                 result = fun(**qargs).answer().frame()
             else:
                 result = fun().answer().frame()
@@ -129,4 +92,4 @@ def run_query_ext(question, snapshots=None):
             st.markdown(f"The query returned these empty columns:  \n{removed_str}.")
 
     except Exception as e:
-        st.exception(e)  # f"Error running query: {e}")
+        st.error(f"Error running query: {e}")

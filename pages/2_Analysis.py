@@ -16,7 +16,7 @@ limitations under the License.
 """
 
 import streamlit as st
-from pages.common.queries import run_query, run_query_ext
+from pages.common.queries import run_query
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
@@ -56,7 +56,7 @@ if "activesnap" in st.session_state:
         tabs = st.tabs(q_names)
         for idx, tab in enumerate(tabs):
             with tab:
-                run_query_ext(qlist[q_names[idx]])
+                run_query(qlist[q_names[idx]])
 
     else:
         st.warning("Select some questions to proceed.")
