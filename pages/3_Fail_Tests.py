@@ -36,20 +36,13 @@ def update_failed(key):
 
 
 # Get selected questions
-alldata = st.session_state.get("qlist")
+qlist = st.session_state.get("qlist")
 
 if "activesnap" in st.session_state:
     st.subheader(f"Snapshot: {st.session_state.activesnap['name']}")
 
     # Run selected questions
-    if alldata:
-        questions_list = [
-            (item["name"], item["fun"])
-            for category in alldata
-            for item in alldata[category]
-            if item.get("fun")
-        ]
-
+    if qlist:
         try:
             nodes = bfq.nodeProperties().answer().frame()
             interfaces = bfq.interfaceProperties().answer().frame()
@@ -81,10 +74,11 @@ if "activesnap" in st.session_state:
                     overwrite=True,
                 )
 
-                tabs = st.tabs([q[0] for q in questions_list])
+                q_names = [q for q in qlist]
+                tabs = st.tabs(q_names)
                 for idx, tab in enumerate(tabs):
                     with tab:
-                        run_query(questions_list[idx][1])
+                        run_query(qlist[q_names[idx]])
             else:
                 st.write("Select failed nodes and/or interfaces.")
         except Exception as e:

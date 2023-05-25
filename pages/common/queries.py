@@ -17,6 +17,7 @@ limitations under the License.
 
 import streamlit as st
 from pybatfish.question import bfq
+from pybatfish.datamodel import PathConstraints, HeaderConstraints
 
 nan = float("NaN")
 NO_DATA = """No data available!
@@ -24,11 +25,26 @@ This usually means that the query is not applicable to the network.
 """
 
 
-def run_query(question_name, snapshots=None):
+def get_params(param_list):
+    qargs = {}
+    for param in param_list:
+        # print(f"Param: {param}")
+        if param.get("name") and param.get("value"):
+            # we have a name an value
+            param_type = param.get("type")
+            if param_type == "HeaderConstraints":
+                qargs[param["name"]] = HeaderConstraints(**param["value"])
+            else:
+                qargs[param["name"]] = param["value"]
+    return qargs
+
+
+def run_query(question, snapshots=None):
     """
     Run Batfish question.
     """
 
+    question_name = question["fun"]
     try:
         # Run query
         fun = getattr(bfq, question_name)
@@ -39,7 +55,13 @@ def run_query(question_name, snapshots=None):
                 .frame()
             )
         else:
-            result = fun().answer().frame()
+            qargs = get_params(question.get("input")) if question.get("input") else None
+            # get_params may also return an empty dict
+            if qargs:
+                # print(f"args: {qargs}")
+                result = fun(**qargs).answer().frame()
+            else:
+                result = fun().answer().frame()
 
         # Replace empty lists with NaN values
         for c in result.columns:
