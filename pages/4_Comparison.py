@@ -17,12 +17,10 @@ limitations under the License.
 
 import streamlit as st
 from pages.common.queries import run_query
+from pages.common.presenter import display_result
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
-NO_DATA = """No data available!
-This usually means that the query is not applicable to the network.
-"""
 
 APP = """This is a Streamlit app that enables the user to run network analysis 
 queries using [Batfish](https://www.batfish.org/). 
@@ -57,13 +55,14 @@ if "activesnap" in st.session_state and "altsnap" in st.session_state:
         tabs = st.tabs(q_names)
         for idx, tab in enumerate(tabs):
             with tab:
-                run_query(
+                answer = run_query(
                     qlist[q_names[idx]],
                     (
                         st.session_state.activesnap["name"],
                         st.session_state.altsnap["name"],
                     ),
                 )
+                display_result(answer)
 
     else:
         st.warning("Select some questions to proceed.")

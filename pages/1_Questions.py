@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import ast
 import yaml
 import streamlit as st
 
@@ -81,6 +82,19 @@ def get_cat_quest_dict(dict_data):
 def update_list(key):
     st.session_state.cats[key] = st.session_state[key]
 
+def generate_input_fields(inputs):
+    input_values = {}
+
+    for input_data in inputs:
+        name = input_data["name"]
+        optional = input_data.get("optional", True)
+        mandatory = '*' if not optional else ''
+        value = input_data.get("value", "")
+
+        input_values[name] = st.text_input(name+mandatory, value)
+
+    return input_values
+
 
 # Initialize the session state
 # qlist saves the current selection of questions
@@ -94,7 +108,7 @@ if "cats" not in st.session_state:
 # The page starts here
 st.set_page_config(layout="wide")
 st.header("Select Questions")
-questions_help = st.checkbox("Full Help", value=False, key="qshelp")
+
 
 # Load the YAML file containing all questions
 bf_questions = upload_questions()["Batfish"]
@@ -121,23 +135,29 @@ else:
 all_selected = []
 new_qlist = {}
 
-# Split the screen into two columns
-col1, col2 = st.columns(2, gap="medium")
 
-with col1:
+# all_tab, input_tab = st.tabs(["Questions", "Options"])
+
+option = st.selectbox(
+    'Tasks',
+    ('Select Questions', 'Enter Input Parameters'))
+
+if option == 'Select Questions':
+
     st.subheader("All Questions")
-
+    st.write("Select questions by category:")
+    questions_help = st.checkbox("Category Description", value=False, key="qshelp")
     # Dispplay a multiselect list for each question category
     for selected_category in bf_questions:
-
+    
         category_name = selected_category.get("category", "")
-        st.markdown(f"**{category_name}**")
-
+        st.markdown(f"#### {category_name}")
+    
         # Show description of the category if required
         if questions_help:
             category_desc = selected_category.get("description", "No description!")
             st.markdown(category_desc)
-
+    
         # Get the question list to populate the multiselect widget
         # from the main questions database
         questions_list = [
@@ -145,7 +165,7 @@ with col1:
             for item in selected_category.get("questions")
             if item.get("name")
         ]
-
+    
         # Get the selected questions
         selected_quetions = st.multiselect(
             "Select a Question",
@@ -155,7 +175,7 @@ with col1:
             on_change=update_list,
             kwargs={"key": category_name},  # do not change to 'args'
         )
-
+    
         # Add the selected question to the displayed list
         all_selected.extend(selected_quetions)
         for question in selected_quetions:
@@ -164,13 +184,46 @@ with col1:
             else:
                 new_qlist[question] = quest_dict[question]
 
-with col2:
-    st.subheader("Selected Questions")
-    st.markdown("These are all the selected questions.")
-    s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
-    st.markdown("\n".join(s))
+    qlist = new_qlist    
 
-qlist = new_qlist
+elif option == 'Enter Input Parameters':
+    st.subheader("Input Paramters")
+    st.markdown(
+        "Enter questions' input paramters here. \
+            For more information, see the [docs](https://batfish.readthedocs.io/). \
+                Note: Only questions that take input parameters are listed.")
+
+    
+    for question, data in qlist.items():
+        input_fields = data.get("input", [])
+    
+        
+        if input_fields:
+            st.write(f"##### Q: {question}")
+            
+            # create a form for a the input parameters
+            input_values = generate_input_fields(input_fields)
+            # st.write(input_values)
+            for v in input_values:
+                for fld in input_fields:
+                    if fld["name"] == v:
+                        if input_values[v]:
+                            if fld.get("type") == "HeaderConstraints":
+                                fld["value"] = ast.literal_eval(input_values[v])
+                            else:
+                                fld["value"] = input_values[v]
+                        elif fld.get("value"):
+                            del fld["value"]
+                        break
+
+
+else:
+    st.write("Please select an option.")
+        
+# st.subheader("Selected Questions")
+# # st.markdown("These are all the selected questions.")
+# s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
+# st.markdown("\n".join(s))
 
 yaml_list = yaml.dump({"questions": qlist})
 
@@ -182,5 +235,7 @@ st.sidebar.download_button(
     help="Save selected questions to a local YAML file.",
 )
 
+
+    
 st.session_state.qlist = qlist
 # st.session_state.cats = qlist
