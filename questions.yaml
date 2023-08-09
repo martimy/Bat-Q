@@ -1,6 +1,6 @@
 Batfish:
 - category: Snapshot Input
-  description: This category of questions allows you to learn how well Batfish understands
+  description: This set of questions  allows you to learn how well Batfish understands
     your network snapshot.
   questions:
   - fun: initIssues
@@ -12,7 +12,7 @@ Batfish:
     - name: aggregateDuplicates
     name: Snapshot Input File Parse Warnings
 - category: Configuration Properties
-  description: This category of questions enables you to retrieve and process the
+  description: This set of questions  enables you to retrieve and process the
     contents of device configurations in a vendor-agnostic manner (except where the
     question itself is vendor-specific). Batfish organizes configuration content into
     several sub-categories.
@@ -122,7 +122,7 @@ Batfish:
     - name: nodes
     name: F5 BIG-IP VIP Configuration
 - category: Topology
-  description: This category of questions is intended to retrieve the network topology
+  description: This set of questions  is intended to retrieve the network topology
     used by Batfish. This topology is a combination of information in the snapshot
     and inference logic (e.g., which interfaces are layer3 neighbors). Currently,
     Layer 3 topology can be retrieved.
@@ -138,7 +138,7 @@ Batfish:
     - name: remoteNodes
     name: Layer 3 Topology
 - category: Routing Protocol Sessions and Policies
-  description: This category of questions reveals information regarding which routing
+  description: This set of questions  reveals information regarding which routing
     protocol sessions are compatibly configured and which ones are established. It
     also allows to you analyze BGP routing policies.
   questions:
@@ -189,7 +189,7 @@ Batfish:
     - name: perPath
     name: Search Route Policies
 - category: Routing and Forwarding Tables
-  description: This category of questions allows you to query the RIBs and FIBs computed
+  description: This set of questions  allows you to query the RIBs and FIBs computed
     by Batfish.
   questions:
   - fun: routes
@@ -224,7 +224,7 @@ Batfish:
     - name: vrfs
     name: Longest Prefix Match
 - category: Packet Forwarding
-  description: This category of questions allows you to query how different types
+  description: This set of questions  allows you to query how different types
     of traffic is forwarded by the network and if endpoints are able to communicate.
     You can analyze these aspects in a few different ways.
   questions:
@@ -275,7 +275,7 @@ Batfish:
     - name: maxTraces    
     name: Multipath Consistency for router loopbacks
 - category: Access-lists and firewall rules
-  description: This category of questions allows you to analyze the behavior of access
+  description: This set of questions  allows you to analyze the behavior of access
     control lists and firewall rules. It also allows you to comprehensively validate
     (aka verification) that some traffic is or is not allowed.
   questions:
@@ -309,7 +309,7 @@ Batfish:
     - name: ignoreComposites
     name: Find Matching Filter Lines
 - category: IPSec Tunnels
-  description: This category of questions allows you to query IPSec sessions and tunnels.
+  description: This set of questions  allows you to query IPSec sessions and tunnels.
   questions:
   - fun: ipsecSessionStatus
     input:
@@ -323,7 +323,7 @@ Batfish:
     - name: remoteNodes    
     name: IPSec Edges
 - category: VXLAN and EVPN
-  description: This category of questions allows you to query aspects of VXLAN and
+  description: This set of questions  allows you to query aspects of VXLAN and
     EVPN configuration and behavior.
   questions:
   - fun: vxlanVniProperties
@@ -342,7 +342,7 @@ Batfish:
     name: L3 EVPN VNIs
 - category: Resolving Specifiers
   description: Specifier grammars allow you to specify complex inputs for Batfish
-    questions. This category of questions reveals how specifier inputs are resolved
+    questions. This set of questions  reveals how specifier inputs are resolved
     by Batfish.
   questions:
   - fun: resolveLocationSpecifier
@@ -395,6 +395,7 @@ Batfish:
     - name: filters
     - name: ignoreComposites
     name: Compare Filters
+    type: differential
   - fun: differentialReachability
     input:
     - name: pathConstraints
@@ -404,3 +405,4 @@ Batfish:
     - name: invertSearch
     - name: ignoreFilters
     name: Differential Reachability
+    type: differential
