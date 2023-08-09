@@ -17,14 +17,12 @@ limitations under the License.
 
 import streamlit as st
 from pages.common.queries import run_query
-from pages.common.formatter import format_result, json_to_dataframe
+from pages.common.presenter import display_result
 import logging
 
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
-NO_DATA = """No data available!
-This usually means that the query is not applicable to the network.
-"""
+
 
 APP = """This is a Streamlit app that enables the user to run network analysis 
 queries using [Batfish](https://www.batfish.org/). 
@@ -58,27 +56,7 @@ if "activesnap" in st.session_state:
         for idx, tab in enumerate(tabs):
             with tab:
                 answer = run_query(qlist[q_names[idx]])
-
-                try:
-                    filtered_df, removed = format_result(answer.frame())
-
-                    # Print the result
-                    if filtered_df.empty:
-                        st.warning(NO_DATA)
-                    else:
-                        st.dataframe(filtered_df, use_container_width=True)
-
-                    # Print removed columns
-                    if removed:
-                        removed_str = ", ".join(list(removed))
-                        st.markdown(
-                            f"The query returned these empty columns:  \n{removed_str}."
-                        )
-                except:
-                    # st.write(answer.rows[0])
-                    # markdown_table = json_to_markdown_table(answer.rows[0]["Traces"])
-                    fr = json_to_dataframe(answer.rows[0]["Traces"])
-                    st.dataframe(fr)
+                display_result(answer)
 
     else:
         st.warning("Select some questions to proceed.")

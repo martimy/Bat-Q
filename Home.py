@@ -158,6 +158,7 @@ if success:
 
         if st.sidebar.button("Delete Snapshot"):
             bf_delete_snapshot(select_snapshot)
+            st.session_state.activesnap = {}
             st.experimental_rerun()
 
 else:
