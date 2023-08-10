@@ -234,6 +234,7 @@ Batfish:
       optional: false
     - name: headers
       optional: false
+      type: HeaderConstraints
     - name: maxTraces
     - name: ignoreFilters
     name: Traceroute
@@ -243,6 +244,7 @@ Batfish:
       optional: false
     - name: headers
       optional: false
+      type: HeaderConstraints
     - name: maxTraces
     - name: ignoreFilters    
     name: Bi-directional Traceroute
@@ -250,6 +252,7 @@ Batfish:
     input:
     - name: pathConstraints
     - name: headers
+      type: HeaderConstraints
     - name: actions
     - name: maxTraces
     - name: invertSearch
@@ -260,6 +263,7 @@ Batfish:
     - name: pathConstraints
     - name: headers
       optional: false
+      type: HeaderConstraints
     - name: returnFlowType
     name: Bi-directional Reachability
   - fun: detectLoops
