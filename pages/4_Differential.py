@@ -39,7 +39,7 @@ MAXTABS = 6
 
 # Start Page Here
 st.set_page_config(layout="wide")
-st.header("Comparisons")
+st.header("Differential")
 # st.markdown(APP)
 
 # Get selected questions
