@@ -82,16 +82,17 @@ def get_cat_quest_dict(dict_data):
 def update_list(key):
     st.session_state.cats[key] = st.session_state[key]
 
+
 def generate_input_fields(inputs):
     input_values = {}
 
     for input_data in inputs:
         name = input_data["name"]
         optional = input_data.get("optional", True)
-        mandatory = '*' if not optional else ''
+        mandatory = "*" if not optional else ""
         value = input_data.get("value", "")
 
-        input_values[name] = st.text_input(name+mandatory, value)
+        input_values[name] = st.text_input(name + mandatory, value)
 
     return input_values
 
@@ -107,7 +108,7 @@ if "cats" not in st.session_state:
 
 # The page starts here
 st.set_page_config(layout="wide")
-st.header("Select Questions")
+st.header("Questions")
 
 
 # Load the YAML file containing all questions
@@ -138,26 +139,24 @@ new_qlist = {}
 
 # all_tab, input_tab = st.tabs(["Questions", "Options"])
 
-option = st.selectbox(
-    'Tasks',
-    ('Select Questions', 'Enter Input Parameters'))
+# option = st.selectbox("Tasks", ("Select Questions", "Enter Input Parameters"))
 
-if option == 'Select Questions':
+with st.expander("Select Questions"):
 
     st.subheader("All Questions")
     st.write("Select questions by category:")
     questions_help = st.checkbox("Category Description", value=False, key="qshelp")
     # Dispplay a multiselect list for each question category
     for selected_category in bf_questions:
-    
+
         category_name = selected_category.get("category", "")
         st.markdown(f"#### {category_name}")
-    
+
         # Show description of the category if required
         if questions_help:
             category_desc = selected_category.get("description", "No description!")
             st.markdown(category_desc)
-    
+
         # Get the question list to populate the multiselect widget
         # from the main questions database
         questions_list = [
@@ -165,7 +164,7 @@ if option == 'Select Questions':
             for item in selected_category.get("questions")
             if item.get("name")
         ]
-    
+
         # Get the selected questions
         selected_quetions = st.multiselect(
             "Select a Question",
@@ -175,7 +174,7 @@ if option == 'Select Questions':
             on_change=update_list,
             kwargs={"key": category_name},  # do not change to 'args'
         )
-    
+
         # Add the selected question to the displayed list
         all_selected.extend(selected_quetions)
         for question in selected_quetions:
@@ -184,23 +183,23 @@ if option == 'Select Questions':
             else:
                 new_qlist[question] = quest_dict[question]
 
-    qlist = new_qlist    
-
-elif option == 'Enter Input Parameters':
+with st.expander("Enter Input Parameters"):
     st.subheader("Input Paramters")
-    st.markdown(
-        "Enter questions' input paramters here. \
-            For more information, see the [docs](https://batfish.readthedocs.io/). \
-                Note: Only questions that take input parameters are listed.")
+    if qlist:
+        st.markdown(
+            "Enter questions' input paramters here. \
+                For more information, see the [docs](https://batfish.readthedocs.io/). \
+                    Note: Only questions that take input parameters are listed."
+        )
+    else:
+        st.warning("Please, select some questions.")
 
-    
     for question, data in qlist.items():
         input_fields = data.get("input", [])
-    
-        
+
         if input_fields:
             st.write(f"##### Q: {question}")
-            
+
             # create a form for a the input parameters
             input_values = generate_input_fields(input_fields)
             # st.write(input_values)
@@ -217,13 +216,12 @@ elif option == 'Enter Input Parameters':
                         break
 
 
-else:
-    st.write("Please select an option.")
-        
 # st.subheader("Selected Questions")
 # # st.markdown("These are all the selected questions.")
 # s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
 # st.markdown("\n".join(s))
+
+qlist = new_qlist
 
 yaml_list = yaml.dump({"questions": qlist})
 
@@ -236,6 +234,5 @@ st.sidebar.download_button(
 )
 
 
-    
 st.session_state.qlist = qlist
 # st.session_state.cats = qlist
