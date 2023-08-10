@@ -20,6 +20,7 @@ from pybatfish.question import bfq
 from pybatfish.client.commands import bf_fork_snapshot
 from pages.common.queries import run_query
 from pages.common.presenter import display_result
+from pages.common.utils import convert_template
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
@@ -75,12 +76,15 @@ if "activesnap" in st.session_state:
                     overwrite=True,
                 )
 
-                q_names = [q for q in qlist]
+                # Run selected questions
+                qs = convert_template(qlist)
+                q_names = [q["name"] for q in qs]
                 tabs = st.tabs(q_names)
                 for idx, tab in enumerate(tabs):
                     with tab:
-                        answer = run_query(qlist[q_names[idx]])
+                        answer = run_query(qs[idx])
                         display_result(answer)
+
             else:
                 st.write("Select failed nodes and/or interfaces.")
         except Exception as e:

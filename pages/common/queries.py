@@ -43,19 +43,23 @@ def run_query(question, snapshots=None):
     """
 
     answer = None
-    question_name = question["fun"]
+    question_fun = question["fun"]
     try:
         # Run query
-        fun = getattr(bfq, question_name)
-        if snapshots:
-            answer = fun().answer(
-                snapshot=snapshots[1], reference_snapshot=snapshots[0]
-            )
-        else:
-            qargs = get_params(question.get("input")) if question.get("input") else None
-            # get_params may also return an empty dict
+        fun = getattr(bfq, question_fun)
+        qargs = question.get("options")
+        if snapshots:  # for comparisions
             if qargs:
-                # print(f"args: {qargs}")
+                answer = fun(**qargs).answer(
+                    snapshot=snapshots[1], reference_snapshot=snapshots[0]
+                )
+            else:
+                answer = fun().answer(
+                    snapshot=snapshots[1], reference_snapshot=snapshots[0]
+                )
+        else:  # for active snapshot
+            if qargs:
+                # works even if the paramtype is HeaderConstraints
                 answer = fun(**qargs).answer()
             else:
                 answer = fun().answer()

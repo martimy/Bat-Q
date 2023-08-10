@@ -18,6 +18,7 @@ limitations under the License.
 import streamlit as st
 from pages.common.queries import run_query
 from pages.common.presenter import display_result
+from pages.common.utils import convert_template
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
@@ -50,13 +51,13 @@ if "activesnap" in st.session_state and "altsnap" in st.session_state:
 
     # Run selected questions
     if qlist:
-        # TODO: this generates an exception of questions_list is empty
-        q_names = [q for q in qlist]
+        qs = convert_template(qlist)
+        q_names = [q["name"] for q in qs]
         tabs = st.tabs(q_names)
         for idx, tab in enumerate(tabs):
             with tab:
                 answer = run_query(
-                    qlist[q_names[idx]],
+                    qs[idx],
                     (
                         st.session_state.activesnap["name"],
                         st.session_state.altsnap["name"],
