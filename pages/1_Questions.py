@@ -83,16 +83,22 @@ def update_list(key):
     st.session_state.cats[key] = st.session_state[key]
 
 
-def generate_input_fields(inputs):
+def generate_input_fields(inputs, idx=0, defaults=None):
     input_values = {}
 
     for input_data in inputs:
         name = input_data["name"]
-        optional = input_data.get("optional", True)
-        mandatory = "*" if not optional else ""
-        value = input_data.get("value", "")
+        mandatory = "*" if not input_data.get("optional", True) else ""
+        value = defaults.get(name, "")
 
-        input_values[name] = st.text_input(name + mandatory, value)
+        x = st.text_input(f"{name}{mandatory}", value, key=f"{name}{idx}")
+        if x:
+            if input_data.get("type"):  # any type other than str
+                input_values[name] = ast.literal_eval(x)
+            else:
+                input_values[name] = x
+        else:
+            input_values.pop(name, None)
 
     return input_values
 
@@ -146,7 +152,7 @@ with st.expander("Select Questions"):
     st.subheader("All Questions")
     st.write("Select questions by category:")
     questions_help = st.checkbox("Category Description", value=False, key="qshelp")
-    # Dispplay a multiselect list for each question category
+    # Display a multiselect list for each question category
     for selected_category in bf_questions:
 
         category_name = selected_category.get("category", "")
@@ -181,7 +187,10 @@ with st.expander("Select Questions"):
             if question in qlist:
                 new_qlist[question] = qlist[question]
             else:
-                new_qlist[question] = quest_dict[question]
+                # new_qlist[question] = quest_dict[question]
+                new_qlist[question] = {
+                    k: quest_dict[question][k] for k in {"category", "fun"}
+                }
 
 with st.expander("Enter Input Parameters"):
     st.subheader("Input Paramters")
@@ -195,26 +204,54 @@ with st.expander("Enter Input Parameters"):
         st.warning("Please, select some questions.")
 
     for question, data in qlist.items():
-        input_fields = data.get("input", [])
+        input_fields = quest_dict[question].get("input", [])
 
-        if input_fields:
+        if data.get("variants"):  # there are at least one set of options
+
+            for idx, options in enumerate(data["variants"]):
+                name = (
+                    f"##### Q: {question}_{idx}" if idx > 0 else f"##### Q: {question}"
+                )
+                st.write(name)
+
+                input_values = generate_input_fields(input_fields, idx, options)
+
+                if input_values:
+                    data["variants"][idx] = input_values
+                else:
+                    del data["variants"][idx]
+
+            duplicate_button = st.button("**Clone**", key=question)
+            if duplicate_button:
+                idx += 1
+                name = (
+                    f"##### Q: {question}_{idx}" if idx > 0 else f"##### Q: {question}"
+                )
+                st.write(name)
+
+                input_values = generate_input_fields(input_fields, idx, options)
+
+                if input_values:
+                    data["variants"].append(input_values)
+
+        elif input_fields:
             st.write(f"##### Q: {question}")
 
             # create a form for a the input parameters
             input_values = generate_input_fields(input_fields)
-            # st.write(input_values)
-            for v in input_values:
-                for fld in input_fields:
-                    if fld["name"] == v:
-                        if input_values[v]:
-                            if fld.get("type") == "HeaderConstraints":
-                                fld["value"] = ast.literal_eval(input_values[v])
-                            else:
-                                fld["value"] = input_values[v]
-                        elif fld.get("value"):
-                            del fld["value"]
-                        break
 
+            if input_values:
+                data["variants"] = [input_values]
+
+            duplicate_button = st.button("**Clone**", key=question)
+            if duplicate_button:
+                name = f"##### Q: {question}_1"
+                st.write(name)
+
+                input_values = generate_input_fields(input_fields, 1)
+
+                if input_values:
+                    data["variants"].append(input_values)
 
 # st.subheader("Selected Questions")
 # # st.markdown("These are all the selected questions.")
