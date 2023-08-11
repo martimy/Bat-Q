@@ -44,6 +44,13 @@ def format_result(result):
 
     return filtered_df, removed
 
+def dict_to_str(data: dict):
+    st = ""
+    for key, value in data.items():
+        st += f"{key} = {value}, "
+    
+    
+    return st[:-2]
 
 def json_to_dataframe(traces):
     traces_table = pd.DataFrame(
