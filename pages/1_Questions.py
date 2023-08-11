@@ -83,15 +83,15 @@ def update_list(key):
     st.session_state.cats[key] = st.session_state[key]
 
 
-def generate_input_fields(inputs, idx=0, defaults=None):
+def generate_input_fields(inputs, id, idx=0, defaults=None):
     input_values = {}
 
     for input_data in inputs:
         name = input_data["name"]
         mandatory = "*" if not input_data.get("optional", True) else ""
-        value = defaults.get(name, "")
+        value = defaults.get(name, "") if defaults else ""
 
-        x = st.text_input(f"{name}{mandatory}", value, key=f"{name}{idx}")
+        x = st.text_input(f"{name}{mandatory}", value, key=f"{id}{name}{idx}")
         if x:
             if input_data.get("type"):  # any type other than str
                 input_values[name] = ast.literal_eval(x)
@@ -192,6 +192,8 @@ with st.expander("Select Questions"):
                     k: quest_dict[question][k] for k in {"category", "fun"}
                 }
 
+qlist = new_qlist
+
 with st.expander("Enter Input Parameters"):
     st.subheader("Input Paramters")
     if qlist:
@@ -214,7 +216,9 @@ with st.expander("Enter Input Parameters"):
                 )
                 st.write(name)
 
-                input_values = generate_input_fields(input_fields, idx, options)
+                input_values = generate_input_fields(
+                    input_fields, question, idx, options
+                )
 
                 if input_values:
                     data["variants"][idx] = input_values
@@ -229,7 +233,9 @@ with st.expander("Enter Input Parameters"):
                 )
                 st.write(name)
 
-                input_values = generate_input_fields(input_fields, idx, options)
+                input_values = generate_input_fields(
+                    input_fields, question, idx, options
+                )
 
                 if input_values:
                     data["variants"].append(input_values)
@@ -238,7 +244,7 @@ with st.expander("Enter Input Parameters"):
             st.write(f"##### Q: {question}")
 
             # create a form for a the input parameters
-            input_values = generate_input_fields(input_fields)
+            input_values = generate_input_fields(input_fields, question)
 
             if input_values:
                 data["variants"] = [input_values]
@@ -248,7 +254,7 @@ with st.expander("Enter Input Parameters"):
                 name = f"##### Q: {question}_1"
                 st.write(name)
 
-                input_values = generate_input_fields(input_fields, 1)
+                input_values = generate_input_fields(input_fields, question, 1)
 
                 if input_values:
                     data["variants"].append(input_values)
@@ -258,7 +264,6 @@ with st.expander("Enter Input Parameters"):
 # s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
 # st.markdown("\n".join(s))
 
-qlist = new_qlist
 
 yaml_list = yaml.dump({"questions": qlist})
 
