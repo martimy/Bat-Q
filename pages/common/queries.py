@@ -16,7 +16,7 @@ limitations under the License.
 """
 
 from pybatfish.question import bfq
-from pybatfish.datamodel import PathConstraints, HeaderConstraints
+from pybatfish.datamodel import HeaderConstraints
 
 
 def get_params(param_list):
@@ -48,6 +48,7 @@ def run_query(question, snapshots=None):
         # Run query
         fun = getattr(bfq, question_fun)
         qargs = question.get("options")
+
         if snapshots:  # for comparisions
             if qargs:
                 answer = fun(**qargs).answer(

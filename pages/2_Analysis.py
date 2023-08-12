@@ -19,6 +19,7 @@ import streamlit as st
 from pages.common.queries import run_query
 from pages.common.presenter import display_result
 from pages.common.utils import convert_template
+from pages.common.plotting import get_figure
 import logging
 
 
@@ -61,6 +62,12 @@ if "activesnap" in st.session_state:
 
                 answer = run_query(qs[idx])
                 display_result(answer)
+
+                # Plot some answers
+                if qs[idx]["fun"] in ["layer3Edges", "userProvidedLayer1Edges"]:
+                    _, col, _ = st.columns([1, 2, 1])
+                    fig = get_figure(answer.frame())
+                    col.pyplot(fig)
 
     else:
         st.warning("Select some questions to proceed.")
