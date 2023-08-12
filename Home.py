@@ -29,6 +29,8 @@ from pybatfish.client.commands import (
 import logging
 import socket
 
+logging.getLogger("pybatfish").setLevel(logging.WARNING)
+
 INTRO = """
 This is a Streamlit app that enables the user to run network analysis 
 queries using [Batfish](https://www.batfish.org/). 
@@ -39,6 +41,25 @@ identify configuration errors, security vulnerabilities, and other potential
 issues before they cause problems.
 """
 BASE_NETWORK_NAME = "NETWORK"
+
+# Initialize the session state
+
+if "activesnap" not in st.session_state:
+    st.session_state.activesnap = {}
+
+if "altsnap" not in st.session_state:
+    st.session_state.altsnap = {}
+
+if "qlist" not in st.session_state:
+    # qlist saves the current selection of questions
+    st.session_state.qlist = {}
+
+if "cats" not in st.session_state:
+    # cats holds the former selection of questions
+    st.session_state.cats = {}
+
+
+# End session states
 
 
 def test_connection(host, port=9996):
@@ -102,15 +123,6 @@ def find_index(lst, item):
     except ValueError:
         return 0
 
-
-logging.getLogger("pybatfish").setLevel(logging.WARNING)
-
-
-if "activesnap" not in st.session_state:
-    st.session_state.activesnap = {}
-
-if "altsnap" not in st.session_state:
-    st.session_state.altsnap = {}
 
 bf_host = os.getenv("BATFISH_SERVER") or "127.0.0.1"
 
