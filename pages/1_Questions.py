@@ -247,9 +247,10 @@ with st.expander("Enter Input Parameters"):
             input_values = generate_input_fields(input_fields, question)
 
             if input_values:
+                st.write(input_values)
                 data["variants"] = [input_values]
 
-            duplicate_button = st.button("**Clone**", key=question)
+            duplicate_button = st.button("**Clone**", key=question + "add")
             if duplicate_button:
                 name = f"##### Q: {question}_1"
                 st.write(name)
@@ -259,11 +260,14 @@ with st.expander("Enter Input Parameters"):
                 if input_values:
                     data["variants"].append(input_values)
 
+            # delete_button = st.button("**Del**", key=question+"del")
+            # if delete_button:
+            #     data.pop("variants", None)
+
 # st.subheader("Selected Questions")
 # # st.markdown("These are all the selected questions.")
 # s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
 # st.markdown("\n".join(s))
-
 
 yaml_list = yaml.dump({"questions": qlist})
 
