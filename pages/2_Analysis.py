@@ -36,9 +36,6 @@ Find more information about Batfish questions
 [here](https://batfish.readthedocs.io/en/latest/index.html).
 """
 
-# nan = float("NaN")
-MAXTABS = 6
-
 # Start Page Here
 st.set_page_config(layout="wide")
 st.header("Network Analysis")

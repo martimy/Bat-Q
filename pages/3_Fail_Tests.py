@@ -16,42 +16,44 @@ limitations under the License.
 """
 
 import streamlit as st
-from pybatfish.question import bfq
-from pybatfish.client.commands import bf_fork_snapshot
-from pages.common.queries import run_query
+from pages.common.queries import (
+    run_query,
+    get_node_properties,
+    get_interface_properties,
+    fork_snapshot,
+)
 from pages.common.presenter import display_result
 from pages.common.utils import convert_template
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
-MAXTABS = 6
+# Get selected questions
+qlist = st.session_state.get("qlist")
+active_snapshot = st.session_state.activesnap["name"]
 
 # Start Page Here
 st.set_page_config(layout="wide")
 st.header("Failure Tests")
-# st.markdown(APP)
 
 
 def update_failed(key):
     st.session_state.activesnap[key] = st.session_state[key]
 
 
-# Get selected questions
-qlist = st.session_state.get("qlist")
-
 if "activesnap" in st.session_state:
-    st.subheader(f"Snapshot: {st.session_state.activesnap['name']}")
+    st.subheader(f"Active Snapshot: {active_snapshot}")
 
     # Run selected questions
     if qlist:
         try:
-            nodes = bfq.nodeProperties().answer().frame()
-            interfaces = bfq.interfaceProperties().answer().frame()
+            nodes = get_node_properties()
+            interfaces = get_interface_properties()
 
+            # Select a node and/or an interface to fail
             failed_nodes = st.multiselect(
                 "Select failed nodes",
-                nodes["Node"],
+                nodes,
                 key="failednodes",
                 default=st.session_state.activesnap["failednodes"],
                 on_change=update_failed,
@@ -60,21 +62,17 @@ if "activesnap" in st.session_state:
 
             failed_interfaces = st.multiselect(
                 "Select failed interfaces",
-                interfaces["Interface"],
+                interfaces,
                 key="failedinfs",
                 default=st.session_state.activesnap["failedinfs"],
                 on_change=update_failed,
                 kwargs={"key": "failedinfs"},  # do not change to 'args'
             )
 
+            # Create a new snapshot by forking the active snapshot
+            # the new snapshot includes the failed components
             if failed_nodes or failed_interfaces:
-                bf_fork_snapshot(
-                    st.session_state.activesnap["name"],
-                    st.session_state.activesnap["name"] + "_Fail",
-                    deactivate_nodes=failed_nodes,
-                    deactivate_interfaces=failed_interfaces,
-                    overwrite=True,
-                )
+                fork_snapshot(active_snapshot, failed_nodes, failed_interfaces)
 
                 # Run selected questions
                 qs = convert_template(qlist)

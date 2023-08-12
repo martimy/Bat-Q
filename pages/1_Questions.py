@@ -103,15 +103,6 @@ def generate_input_fields(inputs, id, idx=0, defaults=None):
     return input_values
 
 
-# Initialize the session state
-# qlist saves the current selection of questions
-if "qlist" not in st.session_state:
-    st.session_state.qlist = {}
-
-# cats holds the former selection of questions
-if "cats" not in st.session_state:
-    st.session_state.cats = {}
-
 # The page starts here
 st.set_page_config(layout="wide")
 st.header("Questions")

@@ -39,6 +39,10 @@ def get_next_item(input_item, item_list):
 
 
 def convert_template(input_data):
+    """
+    Returns a list of option sets for a question
+    """
+
     output = []
 
     for question_name, question_data in input_data.items():
