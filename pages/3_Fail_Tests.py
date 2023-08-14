@@ -81,13 +81,12 @@ if "activesnap" in st.session_state:
                 for idx, tab in enumerate(tabs):
                     with tab:
                         answer = run_query(qs[idx])
-                        display_result(answer)
+                        display_result(qs[idx]["fun"], answer)
 
             else:
                 st.write("Select failed nodes and/or interfaces.")
         except Exception as e:
-            st.error("Error running query: Probably no active snapshot.")
-            st.error(e)
+            st.error(f"Error encountered in one of the questions: {e}")
 
     else:
         st.warning("Select some questions to proceed.")

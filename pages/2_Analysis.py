@@ -58,7 +58,7 @@ if "activesnap" in st.session_state:
                     st.write(f"**Options:** {qs[idx]['options']}")
 
                 answer = run_query(qs[idx])
-                display_result(answer)
+                display_result(qs[idx]["fun"], answer)
 
                 # Plot some answers
                 if qs[idx]["fun"] in ["layer3Edges", "userProvidedLayer1Edges"]:

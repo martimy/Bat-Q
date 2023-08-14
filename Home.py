@@ -31,15 +31,37 @@ import socket
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
-INTRO = """
-This is a Streamlit app that enables the user to run network analysis 
-queries using [Batfish](https://www.batfish.org/). 
+INTRO = r"""
+Bat-Q is a web app that lets you analyze your network configuration files using 
+[Batfish](https://www.batfish.org/), a powerful open source network analysis 
+tool. Batfish models and analyzes network configurations to identify 
+configuration errors, security vulnerabilities, and other potential issues. 
+With Bat-Q, you can easily run various queries on your network and get 
+instant feedback in a table format.
 
-Batfish is an open-source tool used for network analysis and verification. 
-It allows network engineers to model and analyze network configurations and 
-identify configuration errors, security vulnerabilities, and other potential 
-issues before they cause problems.
+Bat-Q is built with [Streamlit](https://streamlit.io/), a Python framework for 
+creating data-driven web apps. You can find the source code of Bat-Q on 
+[GitHub](https://github.com/martimy/Bat-Q), 
+where you can also learn how to install and use the app. Bat-Q requires 
+Python 3.6+, as well as a Batfish Docker container that can be pulled from 
+Docker Hub.
+
+If you are interested in network analysis and want to try out Batfish, Bat-Q is 
+a great way to get started. You can explore different categories of questions 
+that Batfish offers, such as questions about reachability, routing, access 
+lists, and VPN tunnels. These questions allows you to analyze you network 
+configuration and you can also investigate the network reaction to various 
+failure scenarios.
+
 """
+
+SNAPSHOT = r"""
+A Batfish snapshot is a state of a network at a given time, represented by the 
+configuration files of the network devices and some other supplemental 
+information. The files must be organized in a specific folder structure. In 
+Bat-Q, the folders must be compressed in .zip file.
+"""
+
 BASE_NETWORK_NAME = "NETWORK"
 
 # Initialize the session state
@@ -128,7 +150,9 @@ bf_host = os.getenv("BATFISH_SERVER") or "127.0.0.1"
 
 st.set_page_config(layout="wide")
 st.title("Bat-Q")
-st.markdown(INTRO)
+
+with st.expander("About", expanded=False):
+    st.markdown(INTRO)
 
 success, msg = test_connection(bf_host)
 if success:
@@ -140,7 +164,7 @@ if success:
     snapshots = bf_session.list_snapshots()
 
     if snapshots:
-        st.header("Select Snapshots")
+        st.header("Select Snapshots", help=SNAPSHOT)
         idx = (
             find_index(snapshots, st.session_state.activesnap["name"])
             if st.session_state.activesnap

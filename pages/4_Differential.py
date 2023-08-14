@@ -23,29 +23,15 @@ import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
-APP = """This is a Streamlit app that enables the user to run network analysis 
-queries using [Batfish](https://www.batfish.org/). 
-The app allows the user to select a Batfish question by category and name. 
-The app runs the selected question and displays the results in a table. 
-All answered questions are saved.
-
-Find more information about Batfish questions
-[here](https://batfish.readthedocs.io/en/latest/index.html).
-"""
-
-nan = float("NaN")
-MAXTABS = 6
-
-
 # Start Page Here
 st.set_page_config(layout="wide")
 st.header("Differential")
-# st.markdown(APP)
+
 
 # Get selected questions
 qlist = st.session_state.get("qlist")
 
-if "activesnap" in st.session_state and "altsnap" in st.session_state:
+if "activesnap" in st.session_state and "altsnap" in st.session_state and st.session_state.activesnap['name'] != st.session_state.altsnap['name']:
     st.subheader(f"Refrence snapshot: {st.session_state.activesnap['name']}")
     st.subheader(f"Alternate snapshot: {st.session_state.altsnap['name']}")
 
