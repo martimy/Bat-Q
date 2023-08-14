@@ -23,7 +23,7 @@ This usually means that the query is not applicable to the network.
 """
 nan = float("NaN")
 
-
+select_questions = ["layer3Edges", "Routes", "fileParseStatus", "userProvidedLayer1Edges"]
 def format_result(result):
     """
     format Panadas dataframe to eleminate empty columns.
@@ -58,12 +58,14 @@ def format_result_lite(df):
 
 
 def dict_to_str(data: dict):
-    st = ""
-    for key, value in data.items():
-        st += f"{key} = {value}, "
-
-    return st[:-2]
-
+    if data:
+        st = ""
+        for key, value in data.items():
+            st += f"{key} = {value}, "
+    
+        return st[:-2]
+    return ""
+        
 
 def json_to_dataframe(traces):
     traces_table = pd.DataFrame(
@@ -156,7 +158,70 @@ def filter_frame(df):
     st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
 
-def display_result(answer):
+def display_result(question, answer):
+    if not answer:
+        st.write("There is no answer to this question.")
+        return
+    
+    try:    
+        if question in ["traceroute", "reachability"]:
+                fr = json_to_dataframe(answer.rows[0]["Traces"])
+                st.dataframe(fr)
+        elif question == "bidirectionalTraceroute":
+                st.markdown(
+                    "**Forward Flow:**  \n" + dict_to_str(answer.rows[0]["Forward_Flow"])
+                )
+    
+                st.markdown("**Forward Trace:**")
+    
+                fr1 = json_to_dataframe(answer.rows[0]["Forward_Traces"])
+                st.dataframe(fr1)
+    
+                st.write(
+                    "**Reverse Flow:**  \n" + dict_to_str(answer.rows[0]["Reverse_Flow"])
+                )
+    
+                st.markdown("**Reverse Trace:**")
+    
+                fr2 = json_to_dataframe(answer.rows[0]["Reverse_Traces"])
+                st.dataframe(fr2)
+        elif question in select_questions:
+            filtered_df, removed = format_result(answer.frame())
+    
+            # Print the result
+            if filtered_df.empty:
+                st.warning(NO_DATA)
+            else:
+                st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+                # filter_frame(filtered_df)
+    
+            # Print removed columns
+            if removed:
+                removed_str = ", ".join(list(removed))
+                st.markdown(f"The query returned these empty columns:  \n{removed_str}.")
+        else: # all other questions:
+            # st.dataframe(answer.frame())
+            filtered_df, removed = format_result_lite(answer.frame())
+            # Print the result
+            if filtered_df.empty:
+                st.warning(NO_DATA)
+            else:
+                st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+                # filter_frame(filtered_df)
+
+            # Print removed columns
+            if removed:
+                removed_str = ", ".join(list(removed))
+                st.markdown(
+                    f"The query returned these empty columns:  \n{removed_str}."
+                )
+
+    except Exception as e:
+        st.error(f"Unable to display answer. Error: {e}")
+        st.write("The received answer:")
+        st.write(answer)
+
+def display_result_org(answer):
     """
     Formats the Panads dataframe
 
