@@ -138,10 +138,11 @@ new_qlist = {}
 
 # option = st.selectbox("Tasks", ("Select Questions", "Enter Input Parameters"))
 
-with st.expander("Select Questions"):
+col1, col2 = st.columns(2, gap="medium")
+with col1:
 
-    st.subheader("All Questions")
-    st.write("Select questions by category:")
+    st.subheader("Select Questions")
+    # st.write("Select questions by category:")
     questions_help = st.checkbox("Category Description", value=False, key="qshelp")
     # Display a multiselect list for each question category
     for selected_category in bf_questions:
@@ -185,8 +186,8 @@ with st.expander("Select Questions"):
 
 qlist = new_qlist
 
-with st.expander("Enter Input Parameters"):
-    st.subheader("Input Paramters")
+with col2:
+    st.subheader("Enter Input Paramters")
     if qlist:
         st.markdown(
             "Enter questions' input paramters here. \
@@ -238,7 +239,7 @@ with st.expander("Enter Input Parameters"):
             input_values = generate_input_fields(input_fields, question)
 
             if input_values:
-                st.write(input_values)
+                # st.write(input_values)
                 data["variants"] = [input_values]
 
             duplicate_button = st.button("**Clone**", key=question + "add")
