@@ -19,6 +19,10 @@ import ast
 import yaml
 import streamlit as st
 
+if "cats" not in st.session_state:
+    # cats holds the former selection of questions
+    st.session_state.cats = {}
+
 
 @st.cache_data
 def upload_questions():
@@ -111,9 +115,6 @@ st.header("Questions")
 # Load the YAML file containing all questions
 bf_questions = upload_questions()["Batfish"]
 quest_dict = get_questions_dict(bf_questions)
-# st.write(quest_dict)
-# cat_dict = get_categories_dict(quest_dict)
-# st.write(cat_dict)
 
 # Display category selection dropdown
 category_list = [item["category"] for item in bf_questions]

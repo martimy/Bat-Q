@@ -31,7 +31,13 @@ st.header("Differential")
 # Get selected questions
 qlist = st.session_state.get("qlist")
 
-if "activesnap" in st.session_state and "altsnap" in st.session_state and st.session_state.activesnap['name'] != st.session_state.altsnap['name']:
+if (
+    "activesnap" in st.session_state
+    and "altsnap" in st.session_state
+    and "name" in st.session_state.activesnap
+    and "name" in st.session_state.altsnap
+    and st.session_state.activesnap["name"] != st.session_state.altsnap["name"]
+):
     st.subheader(f"Refrence snapshot: {st.session_state.activesnap['name']}")
     st.subheader(f"Alternate snapshot: {st.session_state.altsnap['name']}")
 

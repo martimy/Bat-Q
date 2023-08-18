@@ -167,23 +167,29 @@ if success:
     upload_snapshot()
     st.markdown(f"**Batfish Server:** {bf_host}")
 
+    # Get all the snapshots in the current session
     snapshots = bf_session.list_snapshots()
 
     if snapshots:
         st.header("Select Snapshots", help=SNAPSHOT)
+
+        # Find the index of the saved snapshot among all snapshots
         idx = (
             find_index(snapshots, st.session_state.activesnap["name"])
             if st.session_state.activesnap
             else 0
         )
 
+        # Select the base snapshot
         select_snapshot = st.selectbox(
             "Main Snapshot", snapshots, index=idx, help="This is the base snapshot."
         )
+
+        # if the index of the returned selection is different:
         st.session_state.activesnap["name"] = bf_set_snapshot(select_snapshot)
+        # This rests the lists when Home pages is visited
         st.session_state.activesnap["failednodes"] = []
         st.session_state.activesnap["failedinfs"] = []
-        # st.write(f"Snapshot: {select_snapshot}")
 
         idx2 = (
             find_index(snapshots, st.session_state.altsnap["name"])
