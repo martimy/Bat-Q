@@ -16,8 +16,7 @@ limitations under the License.
 """
 
 import streamlit as st
-from pybatfish.client.commands import bf_set_snapshot
-from pages.common.queries import run_query
+from pages.common.queries import run_query, set_snapshot
 from pages.common.presenter import display_result
 from pages.common.utils import convert_template
 from pages.common.plotting import get_figure
@@ -45,9 +44,9 @@ st.header("Network Analysis")
 # Get selected questions
 qlist = st.session_state.get("qlist")
 
-if "activesnap" in st.session_state:
-    
-    bf_set_snapshot(st.session_state.activesnap["name"])
+if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
+
+    set_snapshot(st.session_state.activesnap["name"])
     st.subheader(f"Snapshot: {st.session_state.activesnap['name']}")
 
     # Run selected questions

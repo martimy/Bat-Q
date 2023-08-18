@@ -24,13 +24,14 @@ from pages.common.queries import (
 )
 from pages.common.presenter import display_result
 from pages.common.utils import convert_template
+from pages.common.queries import set_snapshot
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 # Get selected questions
 qlist = st.session_state.get("qlist")
-active_snapshot = st.session_state.activesnap["name"]
+# active_snapshot = st.session_state.activesnap["name"]
 
 # Start Page Here
 st.set_page_config(layout="wide")
@@ -41,7 +42,8 @@ def update_failed(key):
     st.session_state.activesnap[key] = st.session_state[key]
 
 
-if "activesnap" in st.session_state:
+if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
+    active_snapshot = set_snapshot(st.session_state.activesnap["name"])
     st.subheader(f"Active Snapshot: {active_snapshot}")
 
     # Run selected questions
@@ -83,8 +85,6 @@ if "activesnap" in st.session_state:
                         answer = run_query(qs[idx])
                         display_result(qs[idx]["fun"], answer)
 
-            else:
-                st.write("Select failed nodes and/or interfaces.")
         except Exception as e:
             st.error(f"Error encountered in one of the questions: {e}")
 

@@ -17,7 +17,7 @@ limitations under the License.
 
 from pybatfish.question import bfq
 from pybatfish.datamodel import HeaderConstraints
-from pybatfish.client.commands import bf_fork_snapshot
+from pybatfish.client.commands import bf_set_snapshot, bf_fork_snapshot
 
 
 def get_node_properties():
@@ -26,6 +26,10 @@ def get_node_properties():
 
 def get_interface_properties():
     return bfq.interfaceProperties().answer().frame()["Interface"]
+
+
+def set_snapshot(active_snapshot):
+    return bf_set_snapshot(active_snapshot)
 
 
 def fork_snapshot(active_snapshot, failed_nodes=None, failed_interfaces=None):
