@@ -33,7 +33,7 @@ select_questions = [
 
 def format_result(result):
     """
-    format Panadas dataframe to eleminate empty columns.
+    format Panadas dataframe to eliminate empty columns.
     """
     # Replace empty lists with NaN values
     for c in result.columns:
@@ -150,10 +150,15 @@ def filter_frame(df):
         # Display the selected columns in the DataFrame
         filtered_df = df[selected_columns] if selected_columns else df
 
-        selected_column = st.selectbox("Select Column to Filter", filtered_df.columns)
-        filter_value = st.text_input(f"Enter {selected_column} value for filtering")
-
         # Filtering the DataFrame based on user input
+        string_columns = []
+        for column in filtered_df.colmuns:
+            if df[column].apply(lambda x: isinstance(x, str)).any():
+                string_columns.append(column)
+
+        selected_column = st.selectbox("Select Column to Filter", string_columns)
+        filter_value = st.text_input(f"Enter {selected_column} value for filtering")
+        
         if filter_value:
             filtered_df = filtered_df[
                 filtered_df[selected_column].str.contains(filter_value, case=False)
@@ -162,12 +167,13 @@ def filter_frame(df):
         #     filtered_df = df
 
     # Display filtered DataFrame
-    st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+    # st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+    return filtered_df
 
 
 def display_result(question, answer):
     if not answer:
-        st.write("There is no answer to this question.")
+        st.write("The answer set is empty.")
         return
 
     try:
@@ -195,10 +201,11 @@ def display_result(question, answer):
         elif question in select_questions:
             filtered_df, removed = format_result(answer.frame())
 
+            # filtered_df = filter_frame(df)
             # Print the result
             if filtered_df.empty:
                 st.warning(NO_DATA)
-            else:
+            else: 
                 st.dataframe(filtered_df, use_container_width=True, hide_index=True)
                 # filter_frame(filtered_df)
 
@@ -226,69 +233,54 @@ def display_result(question, answer):
                 )
 
     except Exception as e:
-        st.error(f"Unable to display answer. Error: {e}")
+        st.error(f"Unable to display formatted answer. Error: {e}")
         st.write("The received answer:")
         st.write(answer)
 
-
-def display_result_org(answer):
-    """
-    Formats the Panads dataframe
-
-    """
+def display_result_diff(question, answer):
+    
     try:
-        filtered_df, removed = format_result(answer.frame())
-
-        # Print the result
-        if filtered_df.empty:
-            st.warning(NO_DATA)
-        else:
-            st.dataframe(filtered_df, use_container_width=True, hide_index=True)
-            # filter_frame(filtered_df)
-
-        # Print removed columns
-        if removed:
-            removed_str = ", ".join(list(removed))
-            st.markdown(f"The query returned these empty columns:  \n{removed_str}.")
-    # TODO: Rewrite to eleminate dependency on exception to handle special cases
-    except Exception as e:
-        # st.write(answer.rows[0])
-        # markdown_table = json_to_markdown_table(answer.rows[0]["Traces"])
-        if answer.rows[0].get("Traces"):
-            fr = json_to_dataframe(answer.rows[0]["Traces"])
+        if question in ["traceroute", "differentialReachability"]:
+            st.markdown("**Reference Trace:**")
+            fr = json_to_dataframe(answer.rows[0]["Reference_Traces"])
             st.dataframe(fr)
-        elif answer.rows[0].get("Forward_Traces"):
+            
+            st.markdown("**Snapshot Trace:**")
+            fr = json_to_dataframe(answer.rows[0]["Snapshot_Traces"])
+            st.dataframe(fr)
+        elif question == "bidirectionalTraceroute":
+            # st.markdown(
+            #     "**Forward Flow:**  \n" + dict_to_str(answer.rows[0]["Forward_Flow"])
+            # )
 
-            st.markdown(
-                "**Forward Flow:**  \n" + dict_to_str(answer.rows[0]["Forward_Flow"])
-            )
+            st.markdown("**Reference Forward Trace:**")
 
-            st.markdown("**Forward Trace:**")
-
-            fr1 = json_to_dataframe(answer.rows[0]["Forward_Traces"])
+            fr1 = json_to_dataframe(answer.rows[1]["Reference_Forward_Traces"])
             st.dataframe(fr1)
 
-            st.write(
-                "**Reverse Flow:**  \n" + dict_to_str(answer.rows[0]["Reverse_Flow"])
-            )
+            st.markdown("**Snapshot Forward Trace:**")
 
-            st.markdown("**Reverse Trace:**")
-
-            fr2 = json_to_dataframe(answer.rows[0]["Reverse_Traces"])
+            fr2 = json_to_dataframe(answer.rows[0]["Snapshot_Forward_Traces"])
             st.dataframe(fr2)
-        else:
-            # st.dataframe(answer.frame())
-            filtered_df, removed = format_result_lite(answer.frame())
-            # Print the result
-            if filtered_df.empty:
-                st.warning(NO_DATA)
-            else:
-                st.dataframe(filtered_df, use_container_width=True, hide_index=True)
-                # filter_frame(filtered_df)
+            
+            # st.write(
+            #     "**Reverse Flow:**  \n" + dict_to_str(answer.rows[0]["Reverse_Flow"])
+            # )
 
-            # Print removed columns
-            if removed:
-                removed_str = ", ".join(list(removed))
-                st.markdown(
-                    f"The query returned these empty columns:  \n{removed_str}."
-                )
+            st.markdown("**Reference Reverse Trace:**")
+
+            fr3 = json_to_dataframe(answer.rows[1]["Reference_Reverse_Traces"])
+            st.dataframe(fr3)
+            
+            st.markdown("**Snapshot Reverse Trace:**")
+            
+            fr4 = json_to_dataframe(answer.rows[0]["Snapshot_Reverse_Traces"])
+            st.dataframe(fr4)
+            
+        else:
+            display_result(question, answer)
+
+    except Exception as e:
+        st.error(f"Unable to display formatted answer. Error: {e}")
+        st.write("The received answer:")
+        st.write(answer)

@@ -17,7 +17,7 @@ limitations under the License.
 
 import streamlit as st
 from pages.common.queries import run_query
-from pages.common.presenter import display_result
+from pages.common.presenter import display_result_diff
 from pages.common.utils import convert_template
 import logging
 
@@ -55,7 +55,7 @@ if (
                         st.session_state.altsnap["name"],
                     ),
                 )
-                display_result(answer)
+                display_result_diff(qs[idx]["fun"], answer)
 
     else:
         st.warning("Select some questions to proceed.")
