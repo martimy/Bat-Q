@@ -18,20 +18,21 @@ limitations under the License.
 import ast
 import yaml
 import streamlit as st
+from pages.common.questions import read_questions
 
 if "cats" not in st.session_state:
     # cats holds the former selection of questions
     st.session_state.cats = {}
 
 
-@st.cache_data
-def upload_questions():
-    """
-    Upload previously saved questions.
-    """
+# @st.cache_data
+# def upload_questions():
+#     """
+#     Upload previously saved questions.
+#     """
 
-    with open("questions.yaml") as f:
-        return yaml.safe_load(f)
+#     with open("questions.yaml") as f:
+#         return yaml.safe_load(f)
 
 
 @st.cache_data
@@ -113,7 +114,8 @@ st.header("Questions")
 
 
 # Load the YAML file containing all questions
-bf_questions = upload_questions()["Batfish"]
+# bf_questions = upload_questions()["Batfish"]
+bf_questions = read_questions()["Batfish"]
 quest_dict = get_questions_dict(bf_questions)
 
 # Display category selection dropdown

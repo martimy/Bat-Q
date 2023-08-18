@@ -85,7 +85,7 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
                     with tab:
                         answer = run_query(qs[idx])
                         display_result(qs[idx]["fun"], answer)
-                        
+
                         # Plot some answers
                         if qs[idx]["fun"] in ["layer3Edges", "userProvidedLayer1Edges"]:
                             _, col, _ = st.columns([1, 2, 1])
