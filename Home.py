@@ -32,6 +32,9 @@ import socket
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 INTRO = r"""
+**Bat-Q** v0.1  
+Copyright 2023 Maen Artimy    
+
 Bat-Q is a web app that lets you analyze your network configuration files using 
 [Batfish](https://www.batfish.org/), a powerful open source network analysis 
 tool. Batfish models and analyzes network configurations to identify 
@@ -53,6 +56,9 @@ lists, and VPN tunnels. These questions allows you to analyze you network
 configuration and you can also investigate the network reaction to various 
 failure scenarios.
 
+Bat-Q is open-source software released under the Apache License, Version 2.0. 
+By using or contributing to Bat-Q, you agree to the terms and 
+conditions of this license.
 """
 
 SNAPSHOT = r"""
