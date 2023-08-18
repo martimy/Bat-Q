@@ -59,7 +59,7 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
                 # if qs[idx].get("type") == "differential":
                 #     st.write("This questions needs two snapshots.")
                 #     continue
-                
+
                 if qs[idx].get("options"):
                     st.write(f"**Options:** {qs[idx]['options']}")
 

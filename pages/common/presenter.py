@@ -158,7 +158,7 @@ def filter_frame(df):
 
         selected_column = st.selectbox("Select Column to Filter", string_columns)
         filter_value = st.text_input(f"Enter {selected_column} value for filtering")
-        
+
         if filter_value:
             filtered_df = filtered_df[
                 filtered_df[selected_column].str.contains(filter_value, case=False)
@@ -205,7 +205,7 @@ def display_result(question, answer):
             # Print the result
             if filtered_df.empty:
                 st.warning(NO_DATA)
-            else: 
+            else:
                 st.dataframe(filtered_df, use_container_width=True, hide_index=True)
                 # filter_frame(filtered_df)
 
@@ -237,14 +237,15 @@ def display_result(question, answer):
         st.write("The received answer:")
         st.write(answer)
 
+
 def display_result_diff(question, answer):
-    
+
     try:
         if question in ["traceroute", "differentialReachability"]:
             st.markdown("**Reference Trace:**")
             fr = json_to_dataframe(answer.rows[0]["Reference_Traces"])
             st.dataframe(fr)
-            
+
             st.markdown("**Snapshot Trace:**")
             fr = json_to_dataframe(answer.rows[0]["Snapshot_Traces"])
             st.dataframe(fr)
@@ -262,7 +263,7 @@ def display_result_diff(question, answer):
 
             fr2 = json_to_dataframe(answer.rows[0]["Snapshot_Forward_Traces"])
             st.dataframe(fr2)
-            
+
             # st.write(
             #     "**Reverse Flow:**  \n" + dict_to_str(answer.rows[0]["Reverse_Flow"])
             # )
@@ -271,12 +272,12 @@ def display_result_diff(question, answer):
 
             fr3 = json_to_dataframe(answer.rows[1]["Reference_Reverse_Traces"])
             st.dataframe(fr3)
-            
+
             st.markdown("**Snapshot Reverse Trace:**")
-            
+
             fr4 = json_to_dataframe(answer.rows[0]["Snapshot_Reverse_Traces"])
             st.dataframe(fr4)
-            
+
         else:
             display_result(question, answer)
 
