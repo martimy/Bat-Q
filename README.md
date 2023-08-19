@@ -1,21 +1,22 @@
-# Bat-Q: Network Analyzer with Batfish
+# Bat-Q: A Streamlit App for Network Analysis with Batfish
 
-This is a Streamlit app that allows you to run network analysis queries using [Batfish](https://www.batfish.org/). The app allows you to select Batfish questions by category and name. The app runs the selected questions and displays the results in table format.
+Bat-Q is a [Streamlit](https://streamlit.io/) app that lets you run various network analysis queries using [Batfish](https://www.batfish.org/), an open source network configuration analysis tool. You can upload your network configuration files as snapshots and analyze different scenarios or states. You can also select from a wide range of Batfish [questions](https://pybatfish.readthedocs.io/en/latest/index.html) to get insights into your network's behavior, performance, and security. Bat-Q displays the answers in tables and diagrams for easy interpretation.
+
+Bat-Q is designed to be simple, interactive, and flexible. You can use it for quick network configuration checks or for network troubleshooting and optimization tasks. Bat-Q is not a replacement for [pyBatfish](https://github.com/batfish/pybatfish), the Python API for Batfish, but rather a complementary tool that can help you get started with network analysis using Batfish.
+
+To use Bat-Q, you need to install Batfish and its dependencies, clone this repository, set the environment variable for the Batfish server IP address, and start the Streamlit app. For more details, please see the Installation and Getting Started sections below.
 
 ## Installation
-
-First, make sure that you have Python 3.6+ and pip installed. Then, you can install the required packages by running:
-
-```bash
-pip3 install -r requirements.txt
-```
-
-
-## Getting Started
 
 To use the app, follow these steps:
 
 1. Install Batfish and run the Batfish services using these [instructions](https://github.com/batfish/batfish)
+
+2. Install streamlit and other requirements
+
+    ```bash
+    pip3 install -r requirements.txt
+    ```
 
 3. Clone this repository:
 
@@ -24,9 +25,9 @@ To use the app, follow these steps:
     cd Bat-Q
     ```
 
-2. Set the environment variable:  BATFISH_SERVER=\<Batfish server IP address\>
+4. Set the environment variable:  BATFISH_SERVER=\<Batfish server IP address\>
 
-3. Start the Streamlit app:
+5. Start the Streamlit app:
 
     ```bash
     streamlit run Home.py
@@ -34,7 +35,7 @@ To use the app, follow these steps:
 
     This will open a Streamlit app in your default web browser.
 
-## Usage
+## Getting Started
 
 
 ### Home page
