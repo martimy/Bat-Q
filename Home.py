@@ -134,14 +134,14 @@ def init_snapshot(config_file, snapshot):
 
 
 def upload_snapshot():
-    filename = st.sidebar.file_uploader("Add network snapshot", type="zip")
-    if filename:
-        new_name = filename.name.split(".")[0]
+    uploaded_file = st.sidebar.file_uploader("Add network snapshot", type="zip")
+    if uploaded_file:
+        new_name = uploaded_file.name.split(".")[0]
         try:
-            bf_init_snapshot(filename, name=new_name, overwrite=True)
+            bf_init_snapshot(uploaded_file, name=new_name, overwrite=True)
             bf_set_snapshot(new_name)
         except:
-            st.sidebar.error(f"File {filename.name} is not recognized!")
+            st.sidebar.error(f"File {uploaded_file.name} is not recognized!")
 
 
 def find_index(lst, item):
