@@ -4,36 +4,76 @@ Bat-Q is a [Streamlit](https://streamlit.io/) app that lets you run various netw
 
 Bat-Q is designed to be simple, interactive, and flexible. You can use it for quick network configuration checks or for network troubleshooting and optimization tasks. Bat-Q is not a replacement for [pyBatfish](https://github.com/batfish/pybatfish), the Python API for Batfish, but rather a complementary tool that can help you get started with network analysis using Batfish.
 
-To use Bat-Q, you need to install Batfish and its dependencies, clone this repository, set the environment variable for the Batfish server IP address, and start the Streamlit app. For more details, please see the Installation and Getting Started sections below.
+## Requirements
+
+To use Bat-Q, you will need:
+
+- A Batfish server capable of running Docker: See the recommended [requirements for Batfish](https://batfish.readthedocs.io/en/latest/system_req.html).
+- A host to run the Bat-Q app.
+
+Note that for training purposes with small networks, you can use one computer to run both Batfish and Bat-Q (a reasonable laptop will work).
 
 ## Installation
 
-To use the app, follow these steps:
+To use the app, follow these steps (assuming Ubuntu Linux, but Windows also works):
 
-1. Install Batfish and run the Batfish services using these [instructions](https://github.com/batfish/batfish)
+### Batfish server
 
-2. Install streamlit and other requirements
+1. Install Docker:
+
+    There are multiple methods, but I recommend using [the apt repository method](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository).
+
+2. To use Docker as a non-privileged user, add the user to the Docker group:
 
     ```bash
-    pip3 install -r requirements.txt
+    $ sudo usermod -aG docker $USER
     ```
 
-3. Clone this repository:
+3. Install Batfish and run the Batfish services:
+
+    ```bash
+    $ docker pull batfish/allinone
+    $ docker run --name batfish -d --restart unless-stopped -v batfish-data:/data -p 9996:9996 batfish/allinone
+    ```
+
+    This is all it is needed for Bat-Q but you can consult these [Batfish installation instructions](https://github.com/batfish/batfish) for other details.
+
+### Bat-Q host
+
+1. Check Python version and install pip3. Bat-Q needs Python 3.6+:
+
+    ```bash
+    $ python3 --version
+    $ sudo apt-get install python3-pip
+    ```
+
+1. Clone this repository:
 
     ```bash
     git clone https://github.com/martimy/Bat-Q
     cd Bat-Q
     ```
 
-4. Set the environment variable:  BATFISH_SERVER=\<Batfish server IP address\>
-
-5. Start the Streamlit app:
+2. Install Streamlit and other requirements
 
     ```bash
-    streamlit run Home.py
+    pip3 install -r requirements.txt
     ```
 
-    This will open a Streamlit app in your default web browser.
+4. Set the environment variable (skip this step if Docker and Streamlit are running on the same machine):
+
+    ```bash
+    $ export BATFISH_SERVER=<Batfish server IP address>
+    $ echo $BATFISH_SERVER
+    ```
+
+5. Start the Streamlit app (you may need to re-login before this step):
+
+    ```bash
+    $ streamlit run Home.py
+    ```
+
+    This will open a Streamlit app in your default web browser. If the browser does not open automatically or if you are using a remote machine, open a browser and direct it to http://\<Bat-Q host\>:8501/
 
 ## Getting Started
 
