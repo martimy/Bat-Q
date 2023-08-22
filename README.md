@@ -40,7 +40,7 @@ To use the app, follow these steps (assuming Ubuntu Linux, but Windows also work
 
 ### Bat-Q host
 
-1. Check Python version and install pip3. Bat-Q needs Python 3.6+:
+1. Check Python version and install pip3. Bat-Q needs Python 3.8+:
 
     ```bash
     $ python3 --version
