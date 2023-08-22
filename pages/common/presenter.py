@@ -88,16 +88,20 @@ def json_to_dataframe(traces):
                 step_type = step["type"]
                 step_action = step["action"]
                 step_detail = step["detail"]
-                traces_table = traces_table.append(
+                # new_trace = pd.DataFrame(
+                #     [disposition, node, step_type, step_action, step_detail],
+                #     columns=["Disposition", "Node", "Type", "Action", "Detail"]
+                # )
+                new_trace = pd.DataFrame(
                     {
                         "Disposition": disposition,
                         "Node": node,
                         "Type": step_type,
                         "Action": step_action,
                         "Detail": step_detail,
-                    },
-                    ignore_index=True,
+                    }
                 )
+                traces_table = pd.concat([traces_table, new_trace], ignore_index=True)
 
     return traces_table
 
