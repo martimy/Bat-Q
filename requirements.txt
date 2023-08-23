@@ -1,5 +1,5 @@
-pybatfish==2023.5.12.784
-streamlit==1.25.0
-networkx==3.0
-matplotlib==3.4.2
+pybatfish
+streamlit
+networkx
+matplotlib
 pandas==2.0.3

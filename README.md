@@ -33,7 +33,7 @@ To use the app, follow these steps (assuming Ubuntu Linux, but Windows also work
 
     ```bash
     $ docker pull batfish/allinone
-    $ docker run --name batfish -d --restart unless-stopped -v batfish-data:/data -p 9996:9996 batfish/allinone
+    $ docker run --name batfish -d --restart unless-stopped -v batfish-data:/data -p 9997:9997 -p 9996:9996 batfish/allinone
     ```
 
     This is all it is needed for Bat-Q but you can consult these [Batfish installation instructions](https://github.com/batfish/batfish) for other details.
