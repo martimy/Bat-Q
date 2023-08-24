@@ -86,10 +86,10 @@ if "cats" not in st.session_state:
     # cats holds the former selection of questions
     st.session_state.cats = {}
 
-
 # End session states
 
 
+@st.cache_data
 def test_connection(host, port=9996):
     """
     Test connection to host
@@ -100,15 +100,10 @@ def test_connection(host, port=9996):
     # Set the timeout to 5 seconds
     sock.settimeout(5)
 
-    success = False
     msg = ""
     # Attempt to connect to the host and port
     try:
-        result = sock.connect_ex((host, port))
-        if result == 0:
-            success = True
-            msg = f"Host {host} is reachable."
-        else:
+        if sock.connect_ex((host, port)):  # returns 0 if successful
             msg = f"Host {host} is not reachable!"
 
     except socket.gaierror:
@@ -118,14 +113,34 @@ def test_connection(host, port=9996):
     finally:
         sock.close()
 
-    return success, msg
+    return msg
 
 
 @st.cache_data
 def init_host(host, network):
+    """
+    Initializes Batfish session. Because of the @st.cache_data decorator, this
+    is called only once.
+
+    Parameters
+    ----------
+    host : str
+        Host address.
+    network : str
+        Name of the Batfish network.
+
+    Returns
+    -------
+    None.
+
+    """
     bf_session.host = host
     bf_set_network(network)
     load_questions()
+
+    # Delete existing snapshots
+    for snapshot in bf_session.list_snapshots():
+        bf_delete_snapshot(snapshot)
 
 
 @st.cache_data
@@ -160,8 +175,8 @@ st.title("Bat-Q")
 with st.expander("About", expanded=False):
     st.markdown(INTRO)
 
-success, msg = test_connection(bf_host)
-if success:
+msg = test_connection(bf_host)
+if msg == "":
     init_host(bf_host, BASE_NETWORK_NAME)
 
     upload_snapshot()
@@ -187,7 +202,7 @@ if success:
 
         # if the index of the returned selection is different:
         st.session_state.activesnap["name"] = bf_set_snapshot(select_snapshot)
-        # This rests the lists when Home pages is visited
+        # This resets the lists when Home pages is visited
         st.session_state.activesnap["failednodes"] = []
         st.session_state.activesnap["failedinfs"] = []
 
@@ -208,6 +223,7 @@ if success:
             bf_delete_snapshot(select_snapshot)
             st.session_state.activesnap = {}
             st.experimental_rerun()
-
+    else:
+        st.warning("Upload a network snapshot.")
 else:
     st.error(msg)
