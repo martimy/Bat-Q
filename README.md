@@ -1,8 +1,11 @@
 # Bat-Q: A Streamlit App for Network Analysis with Batfish
 
-Bat-Q is a [Streamlit](https://streamlit.io/) app that lets you run various network analysis queries using [Batfish](https://www.batfish.org/), an open source network configuration analysis tool. You can upload your network configuration files as snapshots and analyze different scenarios or states. You can also select from a wide range of Batfish [questions](https://pybatfish.readthedocs.io/en/latest/index.html) to get insights into your network's behavior, performance, and security. Bat-Q displays the answers in tables and diagrams for easy interpretation.
+Bat-Q is a [Streamlit](https://streamlit.io/) app that lets you run various network analysis queries using [Batfish](https://www.batfish.org/), an open source network configuration analysis tool. You can upload your network configuration files as snapshots and analyze different scenarios or states. You can also select from a wide range of Batfish [questions](https://pybatfish.readthedocs.io/en/latest/index.html) to get insights into your network's behavior and security. Bat-Q displays the answers in tables and diagrams for easy interpretation.
 
 Bat-Q is designed to be simple, interactive, and flexible. You can use it for quick network configuration checks or for network troubleshooting and optimization tasks. Bat-Q is not a replacement for [pyBatfish](https://github.com/batfish/pybatfish), the Python API for Batfish, but rather a complementary tool that can help you get started with network analysis using Batfish.
+
+
+To learn more about Bat-Q and how to use, please watch these [YouTube tutorials](https://www.youtube.com/playlist?list=PLcWqK41-5YzIpiT223KToro0iaTww-58t) (work in progress).
 
 ## Requirements
 
@@ -86,7 +89,7 @@ At the Home page, you can upload the your network configuration files as .zip fi
 
 ### Questions page
 
-The Questions page displays (almost) all of the Batfish question grouped in categories. Select the questions you would like to use from the left side of the main screen. The right side of the main screen shows input fields for the selected questions. Most questions accept optional input parameters so there is no need to specify these parameters. Mandatory parameters are denoted by an asterisk.
+The Questions page displays (almost) all of the Batfish questions grouped in categories. Select the questions you would like to use from the left side of the main screen. The right side of the main screen shows input fields for the selected questions. Most questions accept optional input parameters so there is no need to specify these parameters. Mandatory parameters are denoted by an asterisk.
 
 Use the side bar to save the selected questions (in the Downloads folder, by default). You can also upload previously saved questions from YAML file.
 
@@ -100,7 +103,7 @@ The Analysis pages shows the answers to the selected questions. Most answers are
 
 ### Failure Tests page
 
-Batfish allows you to test various network failure scenarios by disabling any number of nodes and/or interfaces in the network. The failed components are included in forked snapshot that Bat-Q assigns a name  in the format "<snapshot>_fail".
+Batfish allows you to test various network failure scenarios by disabling any number of nodes and/or interfaces in the network. The failed components are included in forked snapshot that Bat-Q assigns a name in "\<snapshot>_fail" format.
 
 Once the failed components are selected, answers to the selected questions will reflect the new state of the network. You can move back-and-forth between the Analysis page and the Failure Tests pages, or even add/delete/modify questions using the Questions pages, as many times as you wish.
 
@@ -108,7 +111,7 @@ Once the failed components are selected, answers to the selected questions will 
 
 ### Differential page
 
-You can compare two snapshots by select them from the Home page. The Differential shows the answers to the same selected questions but in a slightly different format where the results are shown to belong to the first (Reference) snapshot, the second, or both.
+You can compare two snapshots by selecting them from the Home page. The Differential page shows the answers to the same selected questions but in a slightly different format where the results are shown to belong to the first (Reference) snapshot, the second, or both.
 
 Note that most Batfish questions can be used for single or two snapshots. There are only two questions that can be used for comparisons only.
 
