@@ -183,7 +183,7 @@ def display_result(question, answer):
     try:
         if question in ["traceroute", "reachability"]:
             fr = json_to_dataframe(answer.rows[0]["Traces"])
-            st.dataframe(fr)
+            st.dataframe(fr, hide_index=True)
         elif question == "bidirectionalTraceroute":
             st.markdown(
                 "**Forward Flow:**  \n" + dict_to_str(answer.rows[0]["Forward_Flow"])
@@ -192,7 +192,7 @@ def display_result(question, answer):
             st.markdown("**Forward Trace:**")
 
             fr1 = json_to_dataframe(answer.rows[0]["Forward_Traces"])
-            st.dataframe(fr1)
+            st.dataframe(fr1, hide_index=True)
 
             st.write(
                 "**Reverse Flow:**  \n" + dict_to_str(answer.rows[0]["Reverse_Flow"])
@@ -201,7 +201,7 @@ def display_result(question, answer):
             st.markdown("**Reverse Trace:**")
 
             fr2 = json_to_dataframe(answer.rows[0]["Reverse_Traces"])
-            st.dataframe(fr2)
+            st.dataframe(fr2, hide_index=True)
         elif question in select_questions:
             filtered_df, removed = format_result(answer.frame())
 
@@ -235,55 +235,6 @@ def display_result(question, answer):
                 st.markdown(
                     f"The query returned these empty columns:  \n{removed_str}."
                 )
-
-    except Exception as e:
-        st.error(f"Unable to display formatted answer. Error: {e}")
-        st.write("The received answer:")
-        st.write(answer)
-
-
-def display_result_diff(question, answer):
-
-    try:
-        if question in ["traceroute", "differentialReachability"]:
-            st.markdown("**Reference Trace:**")
-            fr = json_to_dataframe(answer.rows[0]["Reference_Traces"])
-            st.dataframe(fr)
-
-            st.markdown("**Snapshot Trace:**")
-            fr = json_to_dataframe(answer.rows[0]["Snapshot_Traces"])
-            st.dataframe(fr)
-        elif question == "bidirectionalTraceroute":
-            # st.markdown(
-            #     "**Forward Flow:**  \n" + dict_to_str(answer.rows[0]["Forward_Flow"])
-            # )
-
-            st.markdown("**Reference Forward Trace:**")
-
-            fr1 = json_to_dataframe(answer.rows[1]["Reference_Forward_Traces"])
-            st.dataframe(fr1)
-
-            st.markdown("**Snapshot Forward Trace:**")
-
-            fr2 = json_to_dataframe(answer.rows[0]["Snapshot_Forward_Traces"])
-            st.dataframe(fr2)
-
-            # st.write(
-            #     "**Reverse Flow:**  \n" + dict_to_str(answer.rows[0]["Reverse_Flow"])
-            # )
-
-            st.markdown("**Reference Reverse Trace:**")
-
-            fr3 = json_to_dataframe(answer.rows[1]["Reference_Reverse_Traces"])
-            st.dataframe(fr3)
-
-            st.markdown("**Snapshot Reverse Trace:**")
-
-            fr4 = json_to_dataframe(answer.rows[0]["Snapshot_Reverse_Traces"])
-            st.dataframe(fr4)
-
-        else:
-            display_result(question, answer)
 
     except Exception as e:
         st.error(f"Unable to display formatted answer. Error: {e}")
