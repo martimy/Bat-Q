@@ -20,19 +20,15 @@ import yaml
 import streamlit as st
 from pages.common.questions import read_questions
 
+QUESTIONS_INPUT = """
+Enter questions' input paramters here. For more information, 
+see the [docs](https://batfish.readthedocs.io/).  
+Note: Only questions that take input parameters are listed."
+"""
+
 if "cats" not in st.session_state:
     # cats holds the former selection of questions
     st.session_state.cats = {}
-
-
-# @st.cache_data
-# def upload_questions():
-#     """
-#     Upload previously saved questions.
-#     """
-
-#     with open("questions.yaml") as f:
-#         return yaml.safe_load(f)
 
 
 @st.cache_data
@@ -96,12 +92,14 @@ def generate_input_fields(inputs, id, idx=0, defaults=None):
         mandatory = "*" if not input_data.get("optional", True) else ""
         value = defaults.get(name, "") if defaults else ""
 
-        x = st.text_input(f"{name}{mandatory}", value, key=f"{id}{name}{idx}")
-        if x:
+        paramter_value = st.text_input(
+            f"{name}{mandatory}", value, key=f"{id}{name}{idx}"
+        )
+        if paramter_value:
             if input_data.get("type"):  # any type other than str
-                input_values[name] = ast.literal_eval(x)
+                input_values[name] = ast.literal_eval(paramter_value)
             else:
-                input_values[name] = x
+                input_values[name] = paramter_value
         else:
             input_values.pop(name, None)
 
@@ -192,11 +190,7 @@ qlist = new_qlist
 with col2:
     st.subheader("Enter Input Paramters")
     if qlist:
-        st.markdown(
-            "Enter questions' input paramters here. \
-                For more information, see the [docs](https://batfish.readthedocs.io/). \
-                    Note: Only questions that take input parameters are listed."
-        )
+        st.markdown(QUESTIONS_INPUT)
     else:
         st.warning("Please, select some questions.")
 
@@ -211,6 +205,7 @@ with col2:
                 )
                 st.write(name)
 
+                # Get the question's input paramters
                 input_values = generate_input_fields(
                     input_fields, question, idx, options
                 )
@@ -221,6 +216,7 @@ with col2:
                     del data["variants"][idx]
 
             duplicate_button = st.button("**Clone**", key=question)
+
             if duplicate_button:
                 idx += 1
                 name = (
@@ -228,6 +224,7 @@ with col2:
                 )
                 st.write(name)
 
+                # Get the question's input paramters
                 input_values = generate_input_fields(
                     input_fields, question, idx, options
                 )

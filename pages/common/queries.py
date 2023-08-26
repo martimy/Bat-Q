@@ -15,8 +15,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+# import ast
 from pybatfish.question import bfq
-from pybatfish.datamodel import HeaderConstraints
+
+# from pybatfish.datamodel import PathConstraints, HeaderConstraints
 from pybatfish.client.commands import bf_set_snapshot, bf_fork_snapshot
 
 
@@ -42,22 +44,31 @@ def fork_snapshot(active_snapshot, failed_nodes=None, failed_interfaces=None):
     )
 
 
-def get_params(param_list):
-    """
-    Prepare Batfish question parameters
+# def get_params(param_list):
+#     """
+#     Prepare Batfish question parameters
 
-    """
-    qargs = {}
-    for param in param_list:
-        # print(f"Param: {param}")
-        if param.get("name") and param.get("value"):
-            # we have a name an value
-            param_type = param.get("type")
-            if param_type == "HeaderConstraints":
-                qargs[param["name"]] = HeaderConstraints(**param["value"])
-            else:
-                qargs[param["name"]] = param["value"]
-    return qargs
+#     """
+#     qargs = {}
+#     for param in param_list:
+#         # print(f"Param: {param}")
+#         if param.get("name") and param.get("value"):
+#             # we have a name an value
+#             param_type = param.get("type")
+#             if param_type:
+#                 if param_type == "HeaderConstraints":
+#                     header_obj = ast.literal_eval(param["value"])
+#                     qargs[param["name"]] = HeaderConstraints(**header_obj)
+#                 elif param_type == "PathConstraints":
+#                     path_obj = ast.literal_eval(param["value"])
+#                     qargs[param["name"]] = PathConstraints(**path_obj)
+#                 elif param_type == "bool":
+#                     qargs[param["name"]] = ast.literal_eval(param["value"])
+#                 else:  # Unknown
+#                     qargs[param["name"]] = ast.literal_eval(param["value"])
+#             else:
+#                 qargs[param["name"]] = param["value"]
+#     return qargs
 
 
 def run_query(question, snapshots=None):
