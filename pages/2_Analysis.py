@@ -17,7 +17,7 @@ limitations under the License.
 
 import streamlit as st
 from pages.common.queries import run_query, set_snapshot
-from pages.common.presenter import display_result
+from pages.common.presenter import display_result, display_options
 from pages.common.utils import convert_template
 from pages.common.plotting import get_figure
 import logging
@@ -56,12 +56,8 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
         tabs = st.tabs(q_names)
         for idx, tab in enumerate(tabs):
             with tab:
-                # if qs[idx].get("type") == "differential":
-                #     st.write("This questions needs two snapshots.")
-                #     continue
-
                 if qs[idx].get("options"):
-                    st.write(f"**Options:** {qs[idx]['options']}")
+                    display_options(qs[idx]["options"])
 
                 answer = run_query(qs[idx])
                 display_result(qs[idx]["fun"], answer)
