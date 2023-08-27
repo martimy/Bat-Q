@@ -94,13 +94,11 @@ def run_query(question, snapshots=None):
                 )
         else:  # for active snapshot
             if qargs:
-                # works even if the paramtype is HeaderConstraints
                 answer = fun(**qargs).answer()
             else:
                 answer = fun().answer()
 
     except Exception as e:
-        # st.error(f"Error running query: {e}")
         print(e)
     finally:
         return answer
