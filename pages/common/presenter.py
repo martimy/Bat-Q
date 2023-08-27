@@ -77,6 +77,10 @@ def dict_to_str(data: dict):
     return ""
 
 
+def display_options(d):
+    st.write(f"**Options:** {dict_to_str(d)}")
+
+
 # def json_to_dataframe(traces):
 #     traces_table = pd.DataFrame(
 #         columns=["Disposition", "Node", "Type", "Action", "Detail"]
@@ -158,6 +162,9 @@ def filter_frame(df):
 
 
 def display_trace(answer_row):
+    """
+    Displays traces of rechability and traceroute questions.
+    """
 
     count = len(answer_row)
     if count > 1:
@@ -178,6 +185,9 @@ def display_trace(answer_row):
 
 
 def display_result(question, answer):
+    """
+    Dispaly answers to questions. The formatting depends on question type.
+    """
 
     if not answer:
         st.write("The answer set is empty.")
@@ -245,6 +255,10 @@ def display_result(question, answer):
 
 
 def display_result_diff(question, answer):
+    """
+    Dispaly answers to differential questions. The formatting depends on
+    question type.
+    """
 
     try:
         if question in ["traceroute", "differentialReachability"]:
