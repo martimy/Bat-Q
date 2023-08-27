@@ -34,12 +34,42 @@ def get_topology(edges):
     return g
 
 
-def get_figure(pframe):
+# def get_figure(pframe):
+#     """
+#     Plots Pandas data frame
+
+#     """
+#     g = get_topology(pframe)
+
+#     # Calculate spring layout
+#     pos = nx.spring_layout(g)
+
+#     # Draw the graph using matplotlib within Streamlit
+#     fig, ax = plt.subplots()
+#     nx.draw(g, pos, with_labels=True, ax=ax, node_size=1000, font_color="white")
+
+#     return fig
+
+
+def get_routing_topology(edges):
+
+    g = nx.Graph()
+
+    l3edges_json = json.loads(edges.to_json(orient="index"))
+    for k in l3edges_json:
+        neighbor = l3edges_json[k]
+        node_id = neighbor["Node"]
+        remote_node_id = neighbor["Remote_Node"]
+        g.add_edge(node_id, remote_node_id)
+
+    return g
+
+
+def plot_figure(g):
     """
     Plots Pandas data frame
 
     """
-    g = get_topology(pframe)
 
     # Calculate spring layout
     pos = nx.spring_layout(g)
