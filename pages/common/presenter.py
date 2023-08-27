@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import random
 import streamlit as st
 import pandas as pd
 
@@ -29,6 +30,8 @@ select_questions = [
     "fileParseStatus",
     "userProvidedLayer1Edges",
 ]
+
+default_frame_options = {"use_container_width": True, "hide_index": True}
 
 
 def format_result(result):
@@ -74,75 +77,54 @@ def dict_to_str(data: dict):
     return ""
 
 
-def json_to_dataframe(traces):
-    traces_table = pd.DataFrame(
-        columns=["Disposition", "Node", "Type", "Action", "Detail"]
-    )
-    for trace in traces:
-        disposition = trace["disposition"]
-        hops = trace["hops"]
-        for hop in hops:
-            node = hop["node"]["name"]
-            steps = hop["steps"]
-            for step in steps:
-                step_type = step["type"]
-                step_action = step["action"]
-                step_detail = step["detail"]
-                # new_trace = pd.DataFrame(
-                #     [disposition, node, step_type, step_action, step_detail],
-                #     columns=["Disposition", "Node", "Type", "Action", "Detail"]
-                # )
-                new_trace = pd.DataFrame(
-                    {
-                        "Disposition": disposition,
-                        "Node": node,
-                        "Type": step_type,
-                        "Action": step_action,
-                        "Detail": step_detail,
-                    }
-                )
-                traces_table = pd.concat([traces_table, new_trace], ignore_index=True)
+# def json_to_dataframe(traces):
+#     traces_table = pd.DataFrame(
+#         columns=["Disposition", "Node", "Type", "Action", "Detail"]
+#     )
+#     for trace in traces:
+#         disposition = trace["disposition"]
+#         hops = trace["hops"]
+#         for hop in hops:
+#             node = hop["node"]["name"]
+#             steps = hop["steps"]
+#             for step in steps:
+#                 step_type = step["type"]
+#                 step_action = step["action"]
+#                 step_detail = step["detail"]
+#                 # new_trace = pd.DataFrame(
+#                 #     [disposition, node, step_type, step_action, step_detail],
+#                 #     columns=["Disposition", "Node", "Type", "Action", "Detail"]
+#                 # )
+#                 new_trace = pd.DataFrame(
+#                     {
+#                         "Disposition": disposition,
+#                         "Node": node,
+#                         "Type": step_type,
+#                         "Action": step_action,
+#                         "Detail": step_detail,
+#                     }
+#                 )
+#                 traces_table = pd.concat([traces_table, new_trace], ignore_index=True)
+
+#     return traces_table
+
+
+def json_to_dataframe(trace):
+    traces_table = pd.DataFrame(columns=["Node", "Type", "Action", "Detail"])
+    for hop in trace["hops"]:
+        node = hop["node"]["name"]
+        for step in hop["steps"]:
+            new_trace = pd.DataFrame(
+                {
+                    "Node": node,
+                    "Type": step["type"],
+                    "Action": step["action"],
+                    "Detail": step["detail"],
+                }
+            )
+            traces_table = pd.concat([traces_table, new_trace], ignore_index=True)
 
     return traces_table
-
-
-def json_to_markdown_table(traces):
-    traces_table = pd.DataFrame(
-        columns=["Disposition", "Node", "Type", "Action", "Detail"]
-    )
-    for trace in traces:
-        disposition = trace["disposition"]
-        hops = trace["hops"]
-        for hop in hops:
-            node = hop["node"]["name"]
-            steps = hop["steps"]
-            for step in steps:
-                step_type = step["type"]
-                step_action = step["action"]
-                step_detail = step["detail"]
-                traces_table = traces_table.append(
-                    {
-                        "Disposition": disposition,
-                        "Node": node,
-                        "Type": step_type,
-                        "Action": step_action,
-                        "Detail": step_detail,
-                    },
-                    ignore_index=True,
-                )
-
-    markdown_table = ""
-    markdown_table += "| Disposition | Node | Type | Action | Detail |\n"
-    markdown_table += "| --- | --- | --- | --- | --- |\n"
-    for _, row in traces_table.iterrows():
-        disposition = row["Disposition"]
-        node = row["Node"]
-        step_type = row["Type"]
-        step_action = row["Action"]
-        step_detail = row["Detail"]
-        markdown_table += f"| {disposition} | {node} | {step_type} | {step_action} | {step_detail} |\n"
-
-    return markdown_table
 
 
 def filter_frame(df):
@@ -171,37 +153,57 @@ def filter_frame(df):
         #     filtered_df = df
 
     # Display filtered DataFrame
-    # st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+    # st.dataframe(filtered_df, **default_frame_options)
     return filtered_df
 
 
+def display_trace(answer_row):
+
+    count = len(answer_row)
+    if count > 1:
+        trace_idx = st.selectbox(
+            "Select a trace:",
+            [idx for idx in range(count)],
+            format_func=lambda x: f"Trace {x+1} of {count}",
+            key=random.randint(0, 9999),
+        )
+        trace = answer_row[trace_idx]
+        st.write(f"**Disposition:** {trace['disposition']}")
+        fr = json_to_dataframe(trace)
+        st.dataframe(fr, **default_frame_options)
+    else:
+        st.write(f"**Disposition:** {answer_row[0]['disposition']}")
+        fr = json_to_dataframe(answer_row[0])
+        st.dataframe(fr, **default_frame_options)
+
+
 def display_result(question, answer):
+
     if not answer:
         st.write("The answer set is empty.")
         return
 
     try:
         if question in ["traceroute", "reachability"]:
-            fr = json_to_dataframe(answer.rows[0]["Traces"])
-            st.dataframe(fr, hide_index=True)
+            st.write(f"**Trace status:** {answer['status']}")
+            display_trace(answer.rows[0]["Traces"])
+
         elif question == "bidirectionalTraceroute":
+            st.write(f"**Trace status:** {answer['status']}")
             st.markdown(
                 "**Forward Flow:**  \n" + dict_to_str(answer.rows[0]["Forward_Flow"])
             )
 
-            st.markdown("**Forward Trace:**")
-
-            fr1 = json_to_dataframe(answer.rows[0]["Forward_Traces"])
-            st.dataframe(fr1, hide_index=True)
+            st.markdown("**Forward Trace(s):**")
+            display_trace(answer.rows[0]["Forward_Traces"])
 
             st.write(
                 "**Reverse Flow:**  \n" + dict_to_str(answer.rows[0]["Reverse_Flow"])
             )
 
-            st.markdown("**Reverse Trace:**")
+            st.markdown("**Reverse Trace(s):**")
+            display_trace(answer.rows[0]["Reverse_Traces"])
 
-            fr2 = json_to_dataframe(answer.rows[0]["Reverse_Traces"])
-            st.dataframe(fr2, hide_index=True)
         elif question in select_questions:
             filtered_df, removed = format_result(answer.frame())
 
@@ -210,7 +212,7 @@ def display_result(question, answer):
             if filtered_df.empty:
                 st.warning(NO_DATA)
             else:
-                st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+                st.dataframe(filtered_df, **default_frame_options)
                 # filter_frame(filtered_df)
 
             # Print removed columns
@@ -226,7 +228,7 @@ def display_result(question, answer):
             if filtered_df.empty:
                 st.warning(NO_DATA)
             else:
-                st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+                st.dataframe(filtered_df, **default_frame_options)
                 # filter_frame(filtered_df)
 
             # Print removed columns
@@ -247,40 +249,35 @@ def display_result_diff(question, answer):
     try:
         if question in ["traceroute", "differentialReachability"]:
             st.markdown("**Reference Trace:**")
-            fr = json_to_dataframe(answer.rows[0]["Reference_Traces"])
-            st.dataframe(fr, hide_index=True)
+            st.write(f"**Trace status:** {answer['status']}")
+            if answer.rows:
+                display_trace(answer.rows[0]["Reference_Traces"])
 
             st.markdown("**Snapshot Trace:**")
-            fr = json_to_dataframe(answer.rows[0]["Snapshot_Traces"])
-            st.dataframe(fr, hide_index=True)
+            st.write(f"**Trace status:** {answer['status']}")
+            if answer.rows:
+                display_trace(answer.rows[0]["Snapshot_Traces"])
+
         elif question == "bidirectionalTraceroute":
-            # st.markdown(
-            #     "**Forward Flow:**  \n" + dict_to_str(answer.rows[0]["Forward_Flow"])
-            # )
-
-            st.markdown("**Reference Forward Trace:**")
-
-            fr1 = json_to_dataframe(answer.rows[1]["Reference_Forward_Traces"])
-            st.dataframe(fr1, hide_index=True)
+            st.markdown(
+                "**Forward Flow:**  \n" + dict_to_str(answer.rows[0]["Forward_Flow"])
+            )
 
             st.markdown("**Snapshot Forward Trace:**")
+            display_trace(answer.rows[0]["Snapshot_Forward_Traces"])
 
-            fr2 = json_to_dataframe(answer.rows[0]["Snapshot_Forward_Traces"])
-            st.dataframe(fr2, hide_index=True)
+            st.markdown("**Reference Forward Trace:**")
+            display_trace(answer.rows[0]["Reference_Forward_Traces"])
 
-            # st.write(
-            #     "**Reverse Flow:**  \n" + dict_to_str(answer.rows[0]["Reverse_Flow"])
-            # )
-
-            st.markdown("**Reference Reverse Trace:**")
-
-            fr3 = json_to_dataframe(answer.rows[1]["Reference_Reverse_Traces"])
-            st.dataframe(fr3, hide_index=True)
+            st.write(
+                "**Reverse Flow:**  \n" + dict_to_str(answer.rows[0]["Reverse_Flow"])
+            )
 
             st.markdown("**Snapshot Reverse Trace:**")
+            display_trace(answer.rows[0]["Snapshot_Reverse_Traces"])
 
-            fr4 = json_to_dataframe(answer.rows[0]["Snapshot_Reverse_Traces"])
-            st.dataframe(fr4, hide_index=True)
+            st.markdown("**Reference Reverse Trace:**")
+            display_trace(answer.rows[0]["Reference_Reverse_Traces"])
 
         else:
             display_result(question, answer)

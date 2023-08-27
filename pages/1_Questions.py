@@ -97,7 +97,10 @@ def generate_input_fields(inputs, id, idx=0, defaults=None):
         )
         if paramter_value:
             if input_data.get("type"):  # any type other than str
-                input_values[name] = ast.literal_eval(paramter_value)
+                try:
+                    input_values[name] = ast.literal_eval(paramter_value)
+                except:
+                    st.error("Format error")
             else:
                 input_values[name] = paramter_value
         else:
