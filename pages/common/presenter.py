@@ -18,6 +18,7 @@ limitations under the License.
 import random
 import streamlit as st
 import pandas as pd
+from pages.common.plotting import get_topology, get_routing_topology, plot_figure
 
 NO_DATA = """No data available!
 This usually means that the query is not applicable to the network.
@@ -30,6 +31,9 @@ select_questions = [
     "fileParseStatus",
     "userProvidedLayer1Edges",
 ]
+
+topology_questions = ["layer3Edges", "userProvidedLayer1Edges"]
+# , "bgpEdges", "ospfEdges", "ipsecEdges"]
 
 default_frame_options = {"use_container_width": True, "hide_index": True}
 
@@ -247,6 +251,17 @@ def display_result(question, answer):
                 st.markdown(
                     f"The query returned these empty columns:  \n{removed_str}."
                 )
+
+        # Plot some answers
+        if question in topology_questions:
+            _, col, _ = st.columns([1, 2, 1])
+            fig = plot_figure(get_topology(answer.frame()))
+            col.pyplot(fig)
+
+        if question == "bgpEdges":
+            _, col, _ = st.columns([1, 2, 1])
+            fig = plot_figure(get_routing_topology(answer.frame()))
+            col.pyplot(fig)
 
     except Exception as e:
         st.error(f"Unable to display formatted answer. Error: {e}")

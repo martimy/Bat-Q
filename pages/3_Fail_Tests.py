@@ -25,7 +25,6 @@ from pages.common.queries import (
 from pages.common.presenter import display_result
 from pages.common.utils import convert_template
 from pages.common.queries import set_snapshot
-from pages.common.plotting import get_figure
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
@@ -85,12 +84,6 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
                     with tab:
                         answer = run_query(qs[idx])
                         display_result(qs[idx]["fun"], answer)
-
-                        # Plot some answers
-                        if qs[idx]["fun"] in ["layer3Edges", "userProvidedLayer1Edges"]:
-                            _, col, _ = st.columns([1, 2, 1])
-                            fig = get_figure(answer.frame())
-                            col.pyplot(fig)
 
         except Exception as e:
             st.error(f"Error encountered in one of the questions: {e}")
