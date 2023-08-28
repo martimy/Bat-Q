@@ -172,16 +172,13 @@ def display_trace(answer_row):
 
     count = len(answer_row)
     if count > 1:
-        trace_idx = st.selectbox(
-            "Select a trace:",
-            [idx for idx in range(count)],
-            format_func=lambda x: f"Trace {x+1} of {count}",
-            key=random.randint(0, 9999),
-        )
-        trace = answer_row[trace_idx]
-        st.write(f"**Disposition:** {trace['disposition']}")
-        fr = json_to_dataframe(trace)
-        st.dataframe(fr, **default_frame_options)
+        tabs = st.tabs([f"Trace {idx+1}" for idx in range(count)])
+        for idx, tab in enumerate(tabs):
+            with tab:
+                trace = answer_row[idx]
+                st.write(f"**Disposition:** {trace['disposition']}")
+                fr = json_to_dataframe(trace)
+                st.dataframe(fr, **default_frame_options)
     else:
         st.write(f"**Disposition:** {answer_row[0]['disposition']}")
         fr = json_to_dataframe(answer_row[0])
@@ -258,7 +255,7 @@ def display_result(question, answer):
             fig = plot_figure(get_topology(answer.frame()))
             col.pyplot(fig)
 
-        if question == "bgpEdges":
+        elif question == "bgpEdges":
             _, col, _ = st.columns([1, 2, 1])
             fig = plot_figure(get_routing_topology(answer.frame()))
             col.pyplot(fig)
