@@ -5,7 +5,7 @@ Bat-Q is a [Streamlit](https://streamlit.io/) app that lets you run various netw
 Bat-Q is designed to be simple, interactive, and flexible. You can use it for quick network configuration checks or for network troubleshooting and optimization tasks. Bat-Q is not a replacement for [pyBatfish](https://github.com/batfish/pybatfish), the Python API for Batfish, but rather a complementary tool that can help you get started with network analysis using Batfish.
 
 
-To learn more about Bat-Q and how to use, please watch these [YouTube tutorials](https://www.youtube.com/playlist?list=PLcWqK41-5YzIpiT223KToro0iaTww-58t) (work in progress).
+To learn more about Bat-Q and how to use it, please watch these [YouTube tutorials](https://www.youtube.com/playlist?list=PLcWqK41-5YzIpiT223KToro0iaTww-58t) (work in progress).
 
 ## Requirements
 
