@@ -1,4 +1,4 @@
-pybatfish
+pybatfish==2023.12.16.1270
 streamlit
 networkx
 matplotlib
