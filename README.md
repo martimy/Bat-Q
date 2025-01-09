@@ -39,6 +39,12 @@ To use the app, follow these steps (assuming Ubuntu Linux, but Windows also work
     $ docker run --name batfish -d --restart unless-stopped -v batfish-data:/data -p 9997:9997 -p 9996:9996 batfish/allinone
     ```
 
+or, to run on local host:
+
+    ```
+    $ docker run --name batfish -d --net host -v batfish-data:/data batfish/allinone
+    ```
+
     This is all it is needed for Bat-Q but you can consult these [Batfish installation instructions](https://github.com/batfish/batfish) for other details.
 
 ### Bat-Q host
@@ -57,7 +63,7 @@ To use the app, follow these steps (assuming Ubuntu Linux, but Windows also work
     cd Bat-Q
     ```
 
-2. Install Streamlit and other requirements
+2. Install Streamlit and other requirements. Note that Bat-Q is not yet compatible with the latest pybatfish module so we need to install an earlier version.
 
     ```bash
     pip3 install -r requirements.txt
@@ -80,6 +86,24 @@ To use the app, follow these steps (assuming Ubuntu Linux, but Windows also work
 
 ## Getting Started
 
+
+### Packaging network configuration
+
+Batfish expects network configuration files to be organized in a specific folder structure. The configuration files represent a single snaphost of the network. The folder structures is as follows:
+
+```
+snapshot [top-level folder of the name you chose]
+    configs [folder with configurations files of network devices]
+        router1.cfg
+        router2.cfg
+        …
+
+    batfish [supplemental information (not device configurations)]
+        isp_config.json
+        …
+```
+
+Bat-Q requires that this folder structure is uploaded as a .zip file.
 
 ### Home page
 
