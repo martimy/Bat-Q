@@ -76,6 +76,12 @@ or, to run on local host:
     $ echo $BATFISH_SERVER
     ```
 
+    for Windows:
+
+    ```bash
+    Bat-Q>set BATFISH_SERVER=<Batfish server IP address>
+    ```
+
 5. Start the Streamlit app (you may need to re-login before this step):
 
     ```bash
