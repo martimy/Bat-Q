@@ -222,7 +222,7 @@ if msg == "":
         if st.sidebar.button("Delete Snapshot"):
             bf_delete_snapshot(select_snapshot)
             st.session_state.activesnap = {}
-            st.experimental_rerun()
+            st.rerun()
     else:
         st.warning("Upload a network snapshot.")
 else:
