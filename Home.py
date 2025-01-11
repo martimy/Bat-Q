@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright 2023 Maen Artimy
+Copyright 2023-2025 Maen Artimy
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,22 +18,15 @@ limitations under the License.
 
 import os
 import streamlit as st
-from pybatfish.question import load_questions
-from pybatfish.client.commands import (
-    bf_session,
-    bf_set_network,
-    bf_init_snapshot,
-    bf_set_snapshot,
-    bf_delete_snapshot,
-)
+from pybatfish.client.session import Session
 import logging
 import socket
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 INTRO = r"""
-**Bat-Q** v0.1  
-Copyright 2023 Maen Artimy    
+**Bat-Q** v0.2  
+Copyright 2023-2025 Maen Artimy    
 
 Bat-Q is a web app that lets you analyze your network configuration files using 
 [Batfish](https://www.batfish.org/), a powerful open source network analysis 
@@ -71,6 +64,10 @@ Bat-Q, the folders must be compressed in .zip file.
 BASE_NETWORK_NAME = "NETWORK"
 
 # Initialize the session state
+
+if "bf" not in st.session_state:
+    # bf holds the batfish session
+    st.session_state.bf = None
 
 if "activesnap" not in st.session_state:
     st.session_state.activesnap = {}
@@ -116,7 +113,8 @@ def test_connection(host, port=9996):
     return msg
 
 
-@st.cache_data
+# @st.cache_data
+@st.cache_resource
 def init_host(host, network):
     """
     Initializes Batfish session. Because of the @st.cache_data decorator, this
@@ -134,27 +132,32 @@ def init_host(host, network):
     None.
 
     """
-    bf_session.host = host
-    bf_set_network(network)
-    load_questions()
+
+    bf = Session(host=host)
+    bf.set_network(network)
+
+    # Load questions
+    bf.q.load()
 
     # Delete existing snapshots
-    for snapshot in bf_session.list_snapshots():
-        bf_delete_snapshot(snapshot)
+    for snapshot in bf.list_snapshots():
+        bf.delete_snapshot(snapshot)
+
+    return bf
 
 
 @st.cache_data
-def init_snapshot(config_file, snapshot):
-    bf_session.init_snapshot(config_file, name=snapshot, overwrite=True)
+def init_snapshot(bf, config_file, snapshot):
+    bf.init_snapshot(config_file, name=snapshot, overwrite=True)
 
 
-def upload_snapshot():
+def upload_snapshot(bf):
     uploaded_file = st.sidebar.file_uploader("Add network snapshot", type="zip")
     if uploaded_file:
         new_name = uploaded_file.name.split(".")[0]
         try:
-            bf_init_snapshot(uploaded_file, name=new_name, overwrite=True)
-            bf_set_snapshot(new_name)
+            bf.init_snapshot(uploaded_file, name=new_name, overwrite=True)
+            bf.set_snapshot(new_name)
         except:
             st.sidebar.error(f"File {uploaded_file.name} is not recognized!")
 
@@ -177,13 +180,14 @@ with st.expander("About", expanded=False):
 
 msg = test_connection(bf_host)
 if msg == "":
-    init_host(bf_host, BASE_NETWORK_NAME)
+    bf = init_host(bf_host, BASE_NETWORK_NAME)
+    st.session_state.bf = bf
 
-    upload_snapshot()
+    upload_snapshot(bf)
     st.markdown(f"**Batfish Server:** {bf_host}")
 
     # Get all the snapshots in the current session
-    snapshots = bf_session.list_snapshots()
+    snapshots = bf.list_snapshots()
 
     if snapshots:
         st.header("Select Snapshots", help=SNAPSHOT)
@@ -201,7 +205,7 @@ if msg == "":
         )
 
         # if the index of the returned selection is different:
-        st.session_state.activesnap["name"] = bf_set_snapshot(select_snapshot)
+        st.session_state.activesnap["name"] = bf.set_snapshot(select_snapshot)
         # This resets the lists when Home pages is visited
         st.session_state.activesnap["failednodes"] = []
         st.session_state.activesnap["failedinfs"] = []
@@ -220,7 +224,7 @@ if msg == "":
         )
 
         if st.sidebar.button("Delete Snapshot"):
-            bf_delete_snapshot(select_snapshot)
+            bf.delete_snapshot(select_snapshot)
             st.session_state.activesnap = {}
             st.rerun()
     else:

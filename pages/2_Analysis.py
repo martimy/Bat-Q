@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright 2023 Maen Artimy
+Copyright 2023-2025 Maen Artimy
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,26 +43,32 @@ st.header("Network Analysis")
 # Get selected questions
 qlist = st.session_state.get("qlist")
 
-if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
+if "bf" in st.session_state:
 
-    set_snapshot(st.session_state.activesnap["name"])
-    st.subheader(f"Snapshot: {st.session_state.activesnap['name']}")
+    bf = st.session_state.get("bf")
 
-    # Run selected questions
-    if qlist:
-        qs = convert_template(qlist)
-        q_names = [q["name"] for q in qs]
-        tabs = st.tabs(q_names)
-        for idx, tab in enumerate(tabs):
-            with tab:
-                if qs[idx].get("options"):
-                    display_options(qs[idx]["options"])
+    if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
 
-                answer = run_query(qs[idx])
-                display_result(qs[idx]["fun"], answer)
+        set_snapshot(bf, st.session_state.activesnap["name"])
+        st.subheader(f"Snapshot: {st.session_state.activesnap['name']}")
+
+        # Run selected questions
+        if qlist:
+            qs = convert_template(qlist)
+            q_names = [q["name"] for q in qs]
+            tabs = st.tabs(q_names)
+            for idx, tab in enumerate(tabs):
+                with tab:
+                    if qs[idx].get("options"):
+                        display_options(qs[idx]["options"])
+
+                    answer = run_query(bf.q, qs[idx])
+                    display_result(qs[idx]["fun"], answer)
+
+        else:
+            st.warning("Select some questions to proceed.")
 
     else:
-        st.warning("Select some questions to proceed.")
-
+        st.warning("Please add a snapshot to continue.")
 else:
-    st.warning("Please add a snapshot to continue.")
+    st.error("No Batfish Session!")

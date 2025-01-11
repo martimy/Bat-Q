@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright 2023 Maen Artimy
+Copyright 2023-2025 Maen Artimy
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,54 +42,60 @@ def update_failed(key):
     st.session_state.activesnap[key] = st.session_state[key]
 
 
-if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
-    active_snapshot = set_snapshot(st.session_state.activesnap["name"])
-    st.subheader(f"Active Snapshot: {active_snapshot}")
+if "bf" in st.session_state:
 
-    # Run selected questions
-    if qlist:
-        try:
-            nodes = get_node_properties()
-            interfaces = get_interface_properties()
+    bf = st.session_state.get("bf")
 
-            # Select a node and/or an interface to fail
-            failed_nodes = st.multiselect(
-                "Select failed nodes",
-                nodes,
-                key="failednodes",
-                default=st.session_state.activesnap["failednodes"],
-                on_change=update_failed,
-                kwargs={"key": "failednodes"},  # do not change to 'args'
-            )
+    if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
+        active_snapshot = set_snapshot(bf, st.session_state.activesnap["name"])
+        st.subheader(f"Active Snapshot: {active_snapshot}")
 
-            failed_interfaces = st.multiselect(
-                "Select failed interfaces",
-                interfaces,
-                key="failedinfs",
-                default=st.session_state.activesnap["failedinfs"],
-                on_change=update_failed,
-                kwargs={"key": "failedinfs"},  # do not change to 'args'
-            )
+        # Run selected questions
+        if qlist:
+            try:
+                nodes = get_node_properties(bf)
+                interfaces = get_interface_properties(bf)
 
-            # Create a new snapshot by forking the active snapshot
-            # the new snapshot includes the failed components
-            if failed_nodes or failed_interfaces:
-                fork_snapshot(active_snapshot, failed_nodes, failed_interfaces)
+                # Select a node and/or an interface to fail
+                failed_nodes = st.multiselect(
+                    "Select failed nodes",
+                    nodes,
+                    key="failednodes",
+                    default=st.session_state.activesnap["failednodes"],
+                    on_change=update_failed,
+                    kwargs={"key": "failednodes"},  # do not change to 'args'
+                )
 
-                # Run selected questions
-                qs = convert_template(qlist)
-                q_names = [q["name"] for q in qs]
-                tabs = st.tabs(q_names)
-                for idx, tab in enumerate(tabs):
-                    with tab:
-                        answer = run_query(qs[idx])
-                        display_result(qs[idx]["fun"], answer)
+                failed_interfaces = st.multiselect(
+                    "Select failed interfaces",
+                    interfaces,
+                    key="failedinfs",
+                    default=st.session_state.activesnap["failedinfs"],
+                    on_change=update_failed,
+                    kwargs={"key": "failedinfs"},  # do not change to 'args'
+                )
 
-        except Exception as e:
-            st.error(f"Error encountered in one of the questions: {e}")
+                # Create a new snapshot by forking the active snapshot
+                # the new snapshot includes the failed components
+                if failed_nodes or failed_interfaces:
+                    fork_snapshot(bf, active_snapshot, failed_nodes, failed_interfaces)
+
+                    # Run selected questions
+                    qs = convert_template(qlist)
+                    q_names = [q["name"] for q in qs]
+                    tabs = st.tabs(q_names)
+                    for idx, tab in enumerate(tabs):
+                        with tab:
+                            answer = run_query(bf.q, qs[idx])
+                            display_result(qs[idx]["fun"], answer)
+
+            except Exception as e:
+                st.error(f"Error encountered in one of the questions: {e}")
+
+        else:
+            st.warning("Select some questions to proceed.")
 
     else:
-        st.warning("Select some questions to proceed.")
-
+        st.warning("Please add a snapshot to continue.")
 else:
-    st.warning("Please add a snapshot to continue.")
+    st.error("No Batfish Session!")

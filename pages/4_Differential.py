@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright 2023 Maen Artimy
+Copyright 2023-2025 Maen Artimy
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,38 +27,45 @@ logging.getLogger("pybatfish").setLevel(logging.WARNING)
 st.set_page_config(layout="wide")
 st.header("Differential")
 
+if "bf" in st.session_state:
 
-# Get selected questions
-qlist = st.session_state.get("qlist")
+    bf = st.session_state.get("bf")
 
-if (
-    "activesnap" in st.session_state
-    and "altsnap" in st.session_state
-    and "name" in st.session_state.activesnap
-    and "name" in st.session_state.altsnap
-    and st.session_state.activesnap["name"] != st.session_state.altsnap["name"]
-):
-    st.subheader(f"Refrence snapshot: {st.session_state.activesnap['name']}")
-    st.subheader(f"Alternate snapshot: {st.session_state.altsnap['name']}")
+    # Get selected questions
+    qlist = st.session_state.get("qlist")
 
-    # Run selected questions
-    if qlist:
-        qs = convert_template(qlist)
-        q_names = [q["name"] for q in qs]
-        tabs = st.tabs(q_names)
-        for idx, tab in enumerate(tabs):
-            with tab:
-                answer = run_query(
-                    qs[idx],
-                    (
-                        st.session_state.activesnap["name"],
-                        st.session_state.altsnap["name"],
-                    ),
-                )
-                display_result_diff(qs[idx]["fun"], answer)
+    if (
+        "activesnap" in st.session_state
+        and "altsnap" in st.session_state
+        and "name" in st.session_state.activesnap
+        and "name" in st.session_state.altsnap
+        and st.session_state.activesnap["name"] != st.session_state.altsnap["name"]
+    ):
+        st.subheader(f"Refrence snapshot: {st.session_state.activesnap['name']}")
+        st.subheader(f"Alternate snapshot: {st.session_state.altsnap['name']}")
+
+        # Run selected questions
+        if qlist:
+            qs = convert_template(qlist)
+            q_names = [q["name"] for q in qs]
+            tabs = st.tabs(q_names)
+            for idx, tab in enumerate(tabs):
+                with tab:
+                    answer = run_query(
+                        bf.q,
+                        qs[idx],
+                        (
+                            st.session_state.activesnap["name"],
+                            st.session_state.altsnap["name"],
+                        ),
+                    )
+                    display_result_diff(qs[idx]["fun"], answer)
+
+        else:
+            st.warning("Select some questions to proceed.")
 
     else:
-        st.warning("Select some questions to proceed.")
+        st.warning("Please add two snapshots to continue.")
 
 else:
-    st.warning("Please add two snapshots to continue.")
+    st.error("No Batfish Session!")

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright 2023 Maen Artimy
+Copyright 2023-2025 Maen Artimy
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,27 +15,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-# import ast
-from pybatfish.question import bfq
-
 # from pybatfish.datamodel import PathConstraints, HeaderConstraints
-from pybatfish.client.commands import bf_set_snapshot, bf_fork_snapshot
+# from pybatfish.client.commands import bf_set_snapshot, bf_fork_snapshot
 
 
-def get_node_properties():
-    return bfq.nodeProperties().answer().frame()["Node"]
+def get_node_properties(bf):
+    return bf.q.nodeProperties().answer().frame()["Node"]
 
 
-def get_interface_properties():
-    return bfq.interfaceProperties().answer().frame()["Interface"]
+def get_interface_properties(bf):
+    return bf.q.interfaceProperties().answer().frame()["Interface"]
 
 
-def set_snapshot(active_snapshot):
-    return bf_set_snapshot(active_snapshot)
+def set_snapshot(bf, active_snapshot):
+    return bf.set_snapshot(active_snapshot)
 
 
-def fork_snapshot(active_snapshot, failed_nodes=None, failed_interfaces=None):
-    bf_fork_snapshot(
+def fork_snapshot(bf, active_snapshot, failed_nodes=None, failed_interfaces=None):
+    bf.fork_snapshot(
         active_snapshot,
         active_snapshot + "_Fail",
         deactivate_nodes=failed_nodes,
@@ -71,7 +68,7 @@ def fork_snapshot(active_snapshot, failed_nodes=None, failed_interfaces=None):
 #     return qargs
 
 
-def run_query(question, snapshots=None):
+def run_query(bfq, question, snapshots=None):
     """
     Run Batfish question and get an answer.
     """
@@ -80,7 +77,7 @@ def run_query(question, snapshots=None):
     question_fun = question["fun"]
     try:
         # Run query
-        fun = getattr(bfq, question_fun)
+        fun = getattr(bfq, question_fun)  # ()
         qargs = question.get("options")
 
         if snapshots:  # for comparisions
