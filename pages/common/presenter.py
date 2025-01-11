@@ -15,7 +15,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import random
 import streamlit as st
 import pandas as pd
 from pages.common.plotting import get_topology, get_routing_topology, plot_figure
@@ -215,6 +214,11 @@ def display_result(question, answer):
             st.markdown("**Reverse Trace(s):**")
             display_trace(answer.rows[0]["Reverse_Traces"])
 
+        elif question == "testFilters":
+
+            flattened = flatten_trace_data(answer.rows)
+            st.dataframe(flattened)
+
         elif question in select_questions:
             filtered_df, removed = format_result(answer.frame())
 
@@ -312,3 +316,60 @@ def display_result_diff(question, answer):
         st.error(f"Unable to display formatted answer. Error: {e}")
         st.write("The received answer:")
         st.write(answer)
+
+
+def flatten_trace_data(data):
+    """
+    Flattens the `Trace` list in a given data structure while retaining the rest of the dictionary intact.
+
+    Args:
+        data (list): List of dictionaries containing node, flow, and trace information.
+
+    Returns:
+        list: Flattened list of dictionaries with trace details extracted.
+    """
+    flattened_data = []
+
+    for item in data:
+        # Common fields that are preserved
+        common_fields = {
+            "Node": item.get("Node"),
+            "Filter_Name": item.get("Filter_Name"),
+            "Flow": item.get("Flow"),
+            "Action": item.get("Action"),
+            "Line_Content": item.get("Line_Content"),
+        }
+
+        # If Trace is empty, add the common fields directly
+        if not item.get("Trace"):
+            flattened_data.append(
+                {**common_fields, "Trace_Text": None, "Trace_Vendor_Structure": None}
+            )
+            continue
+
+        # Process each trace entry
+        for trace in item.get("Trace", []):
+            trace_element = trace.get("traceElement", {})
+            fragments = trace_element.get("fragments", [])
+
+            # Flatten trace fragments into text and vendor structure details
+            trace_text = " ".join(f.get("text", "") for f in fragments if f.get("text"))
+            vendor_structure = next(
+                (
+                    f.get("vendorStructureId")
+                    for f in fragments
+                    if "vendorStructureId" in f
+                ),
+                None,
+            )
+
+            # Append the flattened result
+            flattened_data.append(
+                {
+                    **common_fields,
+                    "Trace_Text": trace_text,
+                    "Trace_Vendor_Structure": vendor_structure,
+                }
+            )
+
+    return flattened_data
