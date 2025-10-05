@@ -34,7 +34,7 @@ select_questions = [
 topology_questions = ["layer3Edges", "userProvidedLayer1Edges"]
 # , "bgpEdges", "ospfEdges", "ipsecEdges"]
 
-default_frame_options = {"use_container_width": True, "hide_index": True}
+default_frame_options = {"width": "stretch", "hide_index": True}
 
 
 def format_result(result):
