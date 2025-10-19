@@ -150,3 +150,8 @@ Note that most Batfish questions can be used for single or two snapshots. There 
 ## Limitations
 
 Bat-Q is not a substitute for pyBatfish, which you will still need to use to get the full power of Batfish. Bat-Q is useful for quick configuration analysis or when writing custom Python code for the network analysis is inefficient or infeasible.
+
+## Author
+
+Created by Maen Artimy - [Personal Blog](http://adhocnode.com)
+
