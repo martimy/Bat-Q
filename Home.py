@@ -18,14 +18,7 @@ limitations under the License.
 
 import os
 import streamlit as st
-from pybatfish.question import load_questions
-from pybatfish.client.commands import (
-    bf_session,
-    bf_set_network,
-    bf_init_snapshot,
-    bf_set_snapshot,
-    bf_delete_snapshot,
-)
+from pybatfish.client.session import Session
 import logging
 import socket
 
@@ -72,6 +65,10 @@ BASE_NETWORK_NAME = "NETWORK"
 
 # Initialize the session state
 
+# Initialize session state for Pybatfish session
+if "bf_session" not in st.session_state:
+    st.session_state.bf_session = None
+
 if "activesnap" not in st.session_state:
     st.session_state.activesnap = {}
 
@@ -79,11 +76,9 @@ if "altsnap" not in st.session_state:
     st.session_state.altsnap = {}
 
 if "qlist" not in st.session_state:
-    # qlist saves the current selection of questions
     st.session_state.qlist = {}
 
 if "cats" not in st.session_state:
-    # cats holds the former selection of questions
     st.session_state.cats = {}
 
 # End session states
@@ -116,53 +111,43 @@ def test_connection(host, port=9996):
     return msg
 
 
-@st.cache_data
-def init_host(host, network):
+def get_or_create_session(host, network):
     """
-    Initializes Batfish session. Because of the @st.cache_data decorator, this
-    is called only once.
-
-    Parameters
-    ----------
-    host : str
-        Host address.
-    network : str
-        Name of the Batfish network.
-
-    Returns
-    -------
-    None.
-
+    Initializes or returns the active Batfish session stored in session_state.
     """
-    bf_session.host = host
-    bf_set_network(network)
-    load_questions()
+    if st.session_state.bf_session is None:
+        bf = Session(host=host)
+        bf.set_network(network)
 
-    # Delete existing snapshots
-    for snapshot in bf_session.list_snapshots():
-        bf_delete_snapshot(snapshot)
+        # Delete existing snapshots upon initial connection
+        for snapshot in bf.list_snapshots():
+            bf.delete_snapshot(snapshot)
+
+        st.session_state.bf_session = bf
+
+    return st.session_state.bf_session
 
 
-@st.cache_data
-def init_snapshot(config_file, snapshot):
-    bf_session.init_snapshot(config_file, name=snapshot, overwrite=True)
+# @st.cache_data
+# def init_snapshot(config_file, snapshot):
+#     bf_session.init_snapshot(config_file, name=snapshot, overwrite=True)
 
 
-def upload_snapshot():
+def upload_snapshot(bf_session):
     uploaded_file = st.sidebar.file_uploader("Add network snapshot", type="zip")
     if uploaded_file:
         new_name = uploaded_file.name.split(".")[0]
         try:
-            bf_init_snapshot(uploaded_file, name=new_name, overwrite=True)
-            bf_set_snapshot(new_name)
-        except:
-            st.sidebar.error(f"File {uploaded_file.name} is not recognized!")
+            # Updated from legacy bf_init_snapshot
+            bf_session.init_snapshot(uploaded_file, name=new_name, overwrite=True)
+            bf_session.set_snapshot(new_name)
+        except Exception as e:
+            st.sidebar.error(f"File {uploaded_file.name} is not recognized! Error: {e}")
 
 
 def find_index(lst, item):
     try:
-        index = lst.index(item)
-        return index
+        return lst.index(item)
     except ValueError:
         return 0
 
@@ -177,9 +162,10 @@ with st.expander("About", expanded=False):
 
 msg = test_connection(bf_host)
 if msg == "":
-    init_host(bf_host, BASE_NETWORK_NAME)
+    # Retrieve or create session via st.session_state
+    bf_session = get_or_create_session(bf_host, BASE_NETWORK_NAME)
 
-    upload_snapshot()
+    upload_snapshot(bf_session)
     st.markdown(f"**Batfish Server:** {bf_host}")
 
     # Get all the snapshots in the current session
@@ -188,21 +174,17 @@ if msg == "":
     if snapshots:
         st.header("Select Snapshots", help=SNAPSHOT)
 
-        # Find the index of the saved snapshot among all snapshots
         idx = (
             find_index(snapshots, st.session_state.activesnap["name"])
             if st.session_state.activesnap
             else 0
         )
 
-        # Select the base snapshot
         select_snapshot = st.selectbox(
             "Main Snapshot", snapshots, index=idx, help="This is the base snapshot."
         )
 
-        # if the index of the returned selection is different:
-        st.session_state.activesnap["name"] = bf_set_snapshot(select_snapshot)
-        # This resets the lists when Home pages is visited
+        st.session_state.activesnap["name"] = bf_session.set_snapshot(select_snapshot)
         st.session_state.activesnap["failednodes"] = []
         st.session_state.activesnap["failedinfs"] = []
 
@@ -220,7 +202,8 @@ if msg == "":
         )
 
         if st.sidebar.button("Delete Snapshot"):
-            bf_delete_snapshot(select_snapshot)
+            # Updated from legacy bf_delete_snapshot
+            bf_session.delete_snapshot(select_snapshot)
             st.session_state.activesnap = {}
             st.rerun()
     else:
