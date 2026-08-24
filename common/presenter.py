@@ -37,6 +37,37 @@ topology_questions = ["layer3Edges", "userProvidedLayer1Edges"]
 default_frame_options = {"use_container_width": True, "hide_index": True}
 
 
+def build_column_config(df):
+    """
+    Infers st.column_config settings from a dataframe's dtypes so that
+    st.dataframe's native toolbar (search, sort, download) renders each
+    column with an appropriate type instead of plain text.
+    """
+    config = {}
+    for col in df.columns:
+        series = df[col]
+        if pd.api.types.is_bool_dtype(series):
+            config[col] = st.column_config.CheckboxColumn(col)
+        elif pd.api.types.is_numeric_dtype(series):
+            config[col] = st.column_config.NumberColumn(col)
+        else:
+            # Batfish frequently returns list/dict-like values that were
+            # already stringified upstream; render them as wrapped text
+            # so long content doesn't get clipped.
+            config[col] = st.column_config.TextColumn(col)
+    return config
+
+
+def show_dataframe(df, **overrides):
+    """
+    Thin wrapper around st.dataframe that applies the default display
+    options plus an inferred column_config, relying on st.dataframe's
+    built-in search/sort/download toolbar instead of custom filter widgets.
+    """
+    options = {**default_frame_options, **overrides}
+    st.dataframe(df, column_config=build_column_config(df), **options)
+
+
 def format_result(result):
     """
     Format Pandas dataframe to eliminate empty columns.
@@ -102,11 +133,11 @@ def display_trace(answer_row):
                 trace = answer_row[idx]
                 st.write(f"**Disposition:** {trace['disposition']}")
                 fr = json_to_dataframe(trace)
-                st.dataframe(fr, **default_frame_options)
+                show_dataframe(fr)
     else:
         st.write(f"**Disposition:** {answer_row[0]['disposition']}")
         fr = json_to_dataframe(answer_row[0])
-        st.dataframe(fr, **default_frame_options)
+        show_dataframe(fr)
 
 
 def display_result(question, answer):
@@ -137,15 +168,15 @@ def display_result(question, answer):
             display_trace(answer.rows[0]["Reverse_Traces"])
 
         elif question == "testFilters":
-            flattened = flatten_trace_data(answer.rows)
-            st.dataframe(flattened)
+            flattened = pd.DataFrame(flatten_trace_data(answer.rows))
+            show_dataframe(flattened)
 
         elif question in select_questions:
             filtered_df, removed = format_result(answer.frame())
             if filtered_df.empty:
                 st.warning(NO_DATA)
             else:
-                st.dataframe(filtered_df, **default_frame_options)
+                show_dataframe(filtered_df)
 
             if removed:
                 removed_str = ", ".join(list(removed))
@@ -157,7 +188,7 @@ def display_result(question, answer):
             if filtered_df.empty:
                 st.warning(NO_DATA)
             else:
-                st.dataframe(filtered_df, **default_frame_options)
+                show_dataframe(filtered_df)
 
             if removed:
                 removed_str = ", ".join(list(removed))

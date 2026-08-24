@@ -47,13 +47,25 @@ if (
         tabs = st.tabs(q_names)
         for idx, tab in enumerate(tabs):
             with tab:
-                answer = run_query(
-                    qs[idx],
-                    (
-                        st.session_state.activesnap["name"],
-                        st.session_state.altsnap["name"],
-                    ),
-                )
+                with st.status(
+                    f"Running '{qs[idx]['name']}'...", expanded=False
+                ) as status:
+                    answer = run_query(
+                        qs[idx],
+                        (
+                            st.session_state.activesnap["name"],
+                            st.session_state.altsnap["name"],
+                        ),
+                    )
+                    if answer is None:
+                        status.update(
+                            label=f"'{qs[idx]['name']}' failed", state="error"
+                        )
+                    else:
+                        status.update(
+                            label=f"'{qs[idx]['name']}' complete", state="complete"
+                        )
+
                 display_result_diff(qs[idx]["fun"], answer)
 
     else:

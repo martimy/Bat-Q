@@ -44,7 +44,13 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
                 if qs[idx].get("options"):
                     display_options(qs[idx]["options"])
 
-                answer = run_query(qs[idx])
+                with st.status(f"Running '{qs[idx]['name']}'...", expanded=False) as status:
+                    answer = run_query(qs[idx])
+                    if answer is None:
+                        status.update(label=f"'{qs[idx]['name']}' failed", state="error")
+                    else:
+                        status.update(label=f"'{qs[idx]['name']}' complete", state="complete")
+
                 display_result(qs[idx]["fun"], answer)
 
     else:
