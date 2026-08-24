@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Copyright 2023 Maen Artimy
+Copyright 2023-2026 Maen Artimy
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 INTRO = r"""
 **Bat-Q** v0.1  
-Copyright 2023 Maen Artimy    
+Copyright 2023-2026 Maen Artimy    
 
 Bat-Q is a web app that lets you analyze your network configuration files using 
 [Batfish](https://www.batfish.org/), a powerful open source network analysis 
