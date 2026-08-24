@@ -16,8 +16,8 @@ limitations under the License.
 """
 
 import streamlit as st
-from pages.common.queries import run_query
-from pages.common.presenter import display_result_diff
+from pages.common.queries import run_query, set_snapshot
+from pages.common.presenter import display_result, display_options
 from pages.common.utils import convert_template, init_session_state
 import logging
 
@@ -25,23 +25,14 @@ logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 init_session_state()
 
-# Start Page Here
-st.set_page_config(layout="wide")
-st.header("Differential")
-
+st.header("Network Analysis")
 
 # Get selected questions
 qlist = st.session_state.get("qlist")
 
-if (
-    "activesnap" in st.session_state
-    and "altsnap" in st.session_state
-    and "name" in st.session_state.activesnap
-    and "name" in st.session_state.altsnap
-    and st.session_state.activesnap["name"] != st.session_state.altsnap["name"]
-):
-    st.subheader(f"Refrence snapshot: {st.session_state.activesnap['name']}")
-    st.subheader(f"Alternate snapshot: {st.session_state.altsnap['name']}")
+if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
+    set_snapshot(st.session_state.activesnap["name"])
+    st.subheader(f"Snapshot: {st.session_state.activesnap['name']}")
 
     # Run selected questions
     if qlist:
@@ -50,17 +41,14 @@ if (
         tabs = st.tabs(q_names)
         for idx, tab in enumerate(tabs):
             with tab:
-                answer = run_query(
-                    qs[idx],
-                    (
-                        st.session_state.activesnap["name"],
-                        st.session_state.altsnap["name"],
-                    ),
-                )
-                display_result_diff(qs[idx]["fun"], answer)
+                if qs[idx].get("options"):
+                    display_options(qs[idx]["options"])
+
+                answer = run_query(qs[idx])
+                display_result(qs[idx]["fun"], answer)
 
     else:
         st.warning("Select some questions to proceed.")
 
 else:
-    st.warning("Please add two snapshots to continue.")
+    st.warning("Please add a snapshot on the Home page to continue.")

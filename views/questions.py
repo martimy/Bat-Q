@@ -34,7 +34,6 @@ init_session_state()
 def get_questions_dict(questions_data):
     """
     Returns all questions dict with question full name as key.
-
     """
     return {
         q["name"]: {
@@ -51,7 +50,6 @@ def get_questions_dict(questions_data):
 def get_categories_dict(dict_data):
     """
     Returns all categories dict with category name as key.
-
     """
     result = {}
     for question in dict_data:
@@ -98,7 +96,7 @@ def generate_input_fields(inputs, id, idx=0, defaults=None):
             if input_data.get("type"):  # any type other than str
                 try:
                     input_values[name] = ast.literal_eval(paramter_value)
-                except:
+                except Exception:
                     st.error("Format error")
             else:
                 input_values[name] = paramter_value
@@ -108,25 +106,17 @@ def generate_input_fields(inputs, id, idx=0, defaults=None):
     return input_values
 
 
-# The page starts here
-st.set_page_config(layout="wide")
 st.header("Questions")
 
-
 # Load the YAML file containing all questions
-# bf_questions = upload_questions()["Batfish"]
 bf_questions = read_questions()["Batfish"]
 quest_dict = get_questions_dict(bf_questions)
 
-# Display category selection dropdown
-category_list = [item["category"] for item in bf_questions]
+with st.sidebar:
+    saved_questions = st.file_uploader(
+        "Upload Questions", type="yaml", help="Load saved questions."
+    )
 
-# Load previously user-saved questions
-saved_questions = st.sidebar.file_uploader(
-    "Upload Questions", type="yaml", help="Load saved questions."
-)
-
-# qlist inlcudes all data releated to saved questions
 if saved_questions:
     qlist = yaml.safe_load(saved_questions)["questions"]
     st.session_state.cats = get_cat_quest_dict(qlist)
@@ -136,53 +126,39 @@ else:
 all_selected = []
 new_qlist = {}
 
-
-# all_tab, input_tab = st.tabs(["Questions", "Options"])
-
-# option = st.selectbox("Tasks", ("Select Questions", "Enter Input Parameters"))
-
 col1, col2 = st.columns(2, gap="medium")
 with col1:
-
     st.subheader("Select Questions")
-    # st.write("Select questions by category:")
     questions_help = st.checkbox("Category Description", value=False, key="qshelp")
-    # Display a multiselect list for each question category
-    for selected_category in bf_questions:
 
+    for selected_category in bf_questions:
         category_name = selected_category.get("category", "")
         st.markdown(f"#### {category_name}")
 
-        # Show description of the category if required
         if questions_help:
             category_desc = selected_category.get("description", "No description!")
             st.markdown(category_desc)
 
-        # Get the question list to populate the multiselect widget
-        # from the main questions database
         questions_list = [
             item["name"]
             for item in selected_category.get("questions")
             if item.get("name")
         ]
 
-        # Get the selected questions
-        selected_quetions = st.multiselect(
+        selected_questions = st.multiselect(
             "Select a Question",
             questions_list,
             key=category_name,
             default=st.session_state.cats.get(category_name),
             on_change=update_list,
-            kwargs={"key": category_name},  # do not change to 'args'
+            kwargs={"key": category_name},
         )
 
-        # Add the selected question to the displayed list
-        all_selected.extend(selected_quetions)
-        for question in selected_quetions:
+        all_selected.extend(selected_questions)
+        for question in selected_questions:
             if question in qlist:
                 new_qlist[question] = qlist[question]
             else:
-                # new_qlist[question] = quest_dict[question]
                 new_qlist[question] = {
                     k: quest_dict[question][k] for k in {"category", "fun"}
                 }
@@ -199,15 +175,13 @@ with col2:
     for question, data in qlist.items():
         input_fields = quest_dict[question].get("input", [])
 
-        if data.get("variants"):  # there are at least one set of options
-
+        if data.get("variants"):
             for idx, options in enumerate(data["variants"]):
                 name = (
                     f"##### Q: {question}_{idx}" if idx > 0 else f"##### Q: {question}"
                 )
                 st.write(name)
 
-                # Get the question's input paramters
                 input_values = generate_input_fields(
                     input_fields, question, idx, options
                 )
@@ -218,7 +192,6 @@ with col2:
                     del data["variants"][idx]
 
             duplicate_button = st.button("**Clone**", key=question)
-
             if duplicate_button:
                 idx += 1
                 name = (
@@ -226,7 +199,6 @@ with col2:
                 )
                 st.write(name)
 
-                # Get the question's input paramters
                 input_values = generate_input_fields(
                     input_fields, question, idx, options
                 )
@@ -236,12 +208,9 @@ with col2:
 
         elif input_fields:
             st.write(f"##### Q: {question}")
-
-            # create a form for a the input parameters
             input_values = generate_input_fields(input_fields, question)
 
             if input_values:
-                # st.write(input_values)
                 data["variants"] = [input_values]
 
             duplicate_button = st.button("**Clone**", key=question + "add")
@@ -254,25 +223,15 @@ with col2:
                 if input_values:
                     data["variants"].append(input_values)
 
-            # delete_button = st.button("**Del**", key=question+"del")
-            # if delete_button:
-            #     data.pop("variants", None)
-
-# st.subheader("Selected Questions")
-# # st.markdown("These are all the selected questions.")
-# s = [f"{i+1}. {q}" for i, q in enumerate(all_selected)]
-# st.markdown("\n".join(s))
-
 yaml_list = yaml.dump({"questions": qlist})
 
-st.sidebar.download_button(
-    label="Save Seletions",
-    data=yaml_list,
-    file_name="select_questions.yaml",
-    mime="text/yaml",
-    help="Save selected questions to a local YAML file.",
-)
-
+with st.sidebar:
+    st.download_button(
+        label="Save Selections",
+        data=yaml_list,
+        file_name="select_questions.yaml",
+        mime="text/yaml",
+        help="Save selected questions to a local YAML file.",
+    )
 
 st.session_state.qlist = qlist
-# st.session_state.cats = qlist

@@ -21,23 +21,20 @@ from pages.common.queries import (
     get_node_properties,
     get_interface_properties,
     fork_snapshot,
+    set_snapshot,
 )
 from pages.common.presenter import display_result
 from pages.common.utils import convert_template, init_session_state
-from pages.common.queries import set_snapshot
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 init_session_state()
 
+st.header("Failure Tests")
+
 # Get selected questions
 qlist = st.session_state.get("qlist")
-# active_snapshot = st.session_state.activesnap["name"]
-
-# Start Page Here
-st.set_page_config(layout="wide")
-st.header("Failure Tests")
 
 
 def update_failed(key):
@@ -59,22 +56,21 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
                 "Select failed nodes",
                 nodes,
                 key="failednodes",
-                default=st.session_state.activesnap["failednodes"],
+                default=st.session_state.activesnap.get("failednodes", []),
                 on_change=update_failed,
-                kwargs={"key": "failednodes"},  # do not change to 'args'
+                kwargs={"key": "failednodes"},
             )
 
             failed_interfaces = st.multiselect(
                 "Select failed interfaces",
                 interfaces,
                 key="failedinfs",
-                default=st.session_state.activesnap["failedinfs"],
+                default=st.session_state.activesnap.get("failedinfs", []),
                 on_change=update_failed,
-                kwargs={"key": "failedinfs"},  # do not change to 'args'
+                kwargs={"key": "failedinfs"},
             )
 
             # Create a new snapshot by forking the active snapshot
-            # the new snapshot includes the failed components
             if failed_nodes or failed_interfaces:
                 fork_snapshot(active_snapshot, failed_nodes, failed_interfaces)
 
@@ -94,4 +90,4 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
         st.warning("Select some questions to proceed.")
 
 else:
-    st.warning("Please add a snapshot to continue.")
+    st.warning("Please add a snapshot on the Home page to continue.")
