@@ -23,11 +23,13 @@ from pages.common.queries import (
     fork_snapshot,
 )
 from pages.common.presenter import display_result
-from pages.common.utils import convert_template
+from pages.common.utils import convert_template, init_session_state
 from pages.common.queries import set_snapshot
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
+
+init_session_state()
 
 # Get selected questions
 qlist = st.session_state.get("qlist")

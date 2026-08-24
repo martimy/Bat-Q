@@ -19,6 +19,7 @@ import ast
 import yaml
 import streamlit as st
 from pages.common.questions import read_questions
+from pages.common.utils import init_session_state
 
 QUESTIONS_INPUT = """
 Enter questions' input paramters here. For more information, 
@@ -26,9 +27,7 @@ see the [docs](https://batfish.readthedocs.io/).
 Note: Only questions that take input parameters are listed."
 """
 
-if "cats" not in st.session_state:
-    # cats holds the former selection of questions
-    st.session_state.cats = {}
+init_session_state()
 
 
 @st.cache_data
