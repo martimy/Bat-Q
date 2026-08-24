@@ -145,7 +145,7 @@ def filter_frame(df):
 
         # Filtering the DataFrame based on user input
         string_columns = []
-        for column in filtered_df.colmuns:
+        for column in filtered_df.columns:
             if df[column].apply(lambda x: isinstance(x, str)).any():
                 string_columns.append(column)
 
