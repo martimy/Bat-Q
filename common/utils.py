@@ -25,6 +25,8 @@ def init_session_state():
     """
     defaults = {
         "bf_session": None,
+        "network_name": "NETWORK",
+        "current_network": None,
         "activesnap": {},
         "altsnap": {},
         "qlist": {},
