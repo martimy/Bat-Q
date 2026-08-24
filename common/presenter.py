@@ -17,8 +17,9 @@ limitations under the License.
 
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-from common.plotting import get_topology, get_routing_topology, plot_figure
+#import matplotlib.pyplot as plt
+#from common.plotting import get_topology, get_routing_topology, plot_figure
+from common.plotting import get_topology, get_routing_topology, plot_plotly # renamed function
 
 NO_DATA = """No data available!
 This usually means that the query is not applicable to the network.
@@ -34,7 +35,7 @@ select_questions = [
 
 topology_questions = ["layer3Edges", "userProvidedLayer1Edges"]
 
-default_frame_options = {"use_container_width": True, "hide_index": True}
+default_frame_options = {"width": "stretch", "hide_index": True}
 
 
 def build_column_config(df):
@@ -58,15 +59,29 @@ def build_column_config(df):
     return config
 
 
+# def show_dataframe(df, **overrides):
+#     """
+#     Thin wrapper around st.dataframe that applies the default display
+#     options plus an inferred column_config, relying on st.dataframe's
+#     built-in search/sort/download toolbar instead of custom filter widgets.
+#     """
+#     options = {**default_frame_options, **overrides}
+#     st.dataframe(df, column_config=build_column_config(df), **options)
+
 def show_dataframe(df, **overrides):
     """
-    Thin wrapper around st.dataframe that applies the default display
-    options plus an inferred column_config, relying on st.dataframe's
-    built-in search/sort/download toolbar instead of custom filter widgets.
+    Thin wrapper around st.dataframe that applies default display options 
+    and converts custom object columns to strings so PyArrow can serialize them.
     """
-    options = {**default_frame_options, **overrides}
-    st.dataframe(df, column_config=build_column_config(df), **options)
+    df_clean = df.copy()
 
+    # Convert non-primitive/object columns (like PyBatfish Interface/Node) to strings
+    for col in df_clean.columns:
+        if df_clean[col].dtype == "object":
+            df_clean[col] = df_clean[col].astype(str)
+
+    options = {**default_frame_options, **overrides}
+    st.dataframe(df_clean, column_config=build_column_config(df_clean), **options)
 
 def format_result(result):
     """
@@ -196,17 +211,26 @@ def display_result(question, answer):
                     f"The query returned these empty columns:  \n{removed_str}."
                 )
 
+        # if question in topology_questions:
+        #     _, col, _ = st.columns([1, 2, 1])
+        #     fig = plot_figure(get_topology(answer.frame()))
+        #     col.pyplot(fig, clear_figure=True)
+        #     plt.close(fig)
+
+        # elif question == "bgpEdges":
+        #     _, col, _ = st.columns([1, 2, 1])
+        #     fig = plot_figure(get_routing_topology(answer.frame()))
+        #     col.pyplot(fig, clear_figure=True)
+        #     plt.close(fig)
+
+        # --- Using (Plotly) ---
         if question in topology_questions:
-            _, col, _ = st.columns([1, 2, 1])
-            fig = plot_figure(get_topology(answer.frame()))
-            col.pyplot(fig, clear_figure=True)
-            plt.close(fig)
+            fig = plot_plotly(get_topology(answer.frame()))
+            st.plotly_chart(fig, width="stretch")
 
         elif question == "bgpEdges":
-            _, col, _ = st.columns([1, 2, 1])
-            fig = plot_figure(get_routing_topology(answer.frame()))
-            col.pyplot(fig, clear_figure=True)
-            plt.close(fig)
+            fig = plot_plotly(get_routing_topology(answer.frame()))
+            st.plotly_chart(fig, width="stretch")
 
     except Exception as e:
         st.error(f"Unable to display formatted answer. Error: {e}")

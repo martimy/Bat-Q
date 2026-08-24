@@ -3,3 +3,4 @@ streamlit==1.62.0
 networkx==3.6.1
 matplotlib==3.11.1
 pandas==3.0.5
+plotly==6.9.0

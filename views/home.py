@@ -17,6 +17,7 @@ limitations under the License.
 
 import os
 import streamlit as st
+import pandas as pd
 from pybatfish.client.session import Session
 import logging
 import socket
@@ -61,7 +62,12 @@ information. The files must be organized in a specific folder structure. In
 Bat-Q, the folders must be compressed in .zip file.
 """
 
-BASE_NETWORK_NAME = "NETWORK"
+NETWORK_HELP = r"""
+A Batfish network is a workspace that groups related snapshots together 
+(e.g. one network per site or per team). Changing the name switches to that 
+network's own snapshots — a name that doesn't exist yet is created 
+automatically.
+"""
 
 init_session_state()
 
@@ -87,29 +93,49 @@ def test_connection(host, port=9996):
 
 
 @st.cache_resource
-def get_batfish_session_resource(host: str, network: str):
+def get_batfish_session_resource(host: str):
     """
-    Creates and caches the Batfish Session resource.
+    Creates and caches the Batfish Session resource. The session is not
+    tied to a single network so its name can be changed later.
     """
-    bf = Session(host=host)
-    bf.set_network(network)
-
-    for snapshot in bf.list_snapshots():
-        try:
-            bf.delete_snapshot(snapshot)
-        except Exception:
-            pass
-
-    return bf
+    return Session(host=host)
 
 
-def get_or_create_session(host, network):
+def get_or_create_session(host):
     """
     Initializes or returns the active Batfish session stored in session_state.
     """
     if st.session_state.bf_session is None:
-        st.session_state.bf_session = get_batfish_session_resource(host, network)
+        st.session_state.bf_session = get_batfish_session_resource(host)
     return st.session_state.bf_session
+
+
+def switch_network(bf_session, network_name):
+    """
+    Points the session at the requested network. Snapshot/answer selections
+    from a previous network don't carry over, so they're cleared whenever
+    the active network actually changes.
+    """
+    if st.session_state.current_network != network_name:
+        bf_session.set_network(network_name)
+        st.session_state.current_network = network_name
+        st.session_state.activesnap = {}
+        st.session_state.altsnap = {}
+        st.session_state.last_uploaded_file = None
+
+
+def unique_snapshot_name(base_name, existing):
+    """
+    Returns base_name if it's free, otherwise base_name_1, base_name_2, ...
+    """
+    if base_name not in existing:
+        return base_name
+    n = 1
+    candidate = f"{base_name}_{n}"
+    while candidate in existing:
+        n += 1
+        candidate = f"{base_name}_{n}"
+    return candidate
 
 
 def upload_snapshot(bf_session):
@@ -118,18 +144,114 @@ def upload_snapshot(bf_session):
         if uploaded_file is not None:
             file_id = f"{uploaded_file.name}_{uploaded_file.size}"
             if st.session_state.get("last_uploaded_file") != file_id:
-                new_name = uploaded_file.name.rsplit(".", 1)[0]
+                base_name = uploaded_file.name.rsplit(".", 1)[0]
+                existing = bf_session.list_snapshots()
+
+                # Never overwrite an existing snapshot on upload -- give the
+                # new one a unique name so it's always added to the list.
+                new_name = unique_snapshot_name(base_name, existing)
+
                 try:
-                    bf_session.init_snapshot(uploaded_file, name=new_name, overwrite=True)
+                    bf_session.init_snapshot(uploaded_file, name=new_name, overwrite=False)
                     bf_session.set_snapshot(new_name)
                     st.session_state.last_uploaded_file = file_id
-                    st.session_state.activesnap["name"] = new_name
-                    st.session_state.activesnap["failednodes"] = []
-                    st.session_state.activesnap["failedinfs"] = []
+                    st.session_state.activesnap = {
+                        "name": new_name,
+                        "failednodes": [],
+                        "failedinfs": [],
+                    }
                     st.toast(f"Snapshot '{new_name}' uploaded successfully!", icon="✅")
                     st.rerun()
                 except Exception as e:
                     st.error(f"File {uploaded_file.name} is not recognized! Error: {e}")
+
+
+def clear_snapshot_refs(name):
+    if st.session_state.activesnap.get("name") == name:
+        st.session_state.activesnap = {}
+    if st.session_state.altsnap.get("name") == name:
+        st.session_state.altsnap = {}
+
+
+def rename_snapshot_refs(old_name, new_name):
+    if st.session_state.activesnap.get("name") == old_name:
+        st.session_state.activesnap["name"] = new_name
+    if st.session_state.altsnap.get("name") == old_name:
+        st.session_state.altsnap["name"] = new_name
+
+
+def render_snapshot_manager(bf_session):
+    """
+    Lists every snapshot in the current network with inline rename/delete
+    controls. Pybatfish has no native rename, so a rename is implemented as
+    fork-to-new-name followed by deleting the old one.
+    """
+    snapshots = bf_session.list_snapshots()
+
+    st.subheader("Manage Snapshots", help=SNAPSHOT)
+
+    if not snapshots:
+        st.info("No snapshots yet. Upload one from the sidebar to get started.")
+        return snapshots
+
+    table = pd.DataFrame({"Snapshot": snapshots, "Rename to": snapshots, "Delete": False})
+
+    edited = st.data_editor(
+        table,
+        column_config={
+            "Snapshot": st.column_config.TextColumn("Snapshot", disabled=True),
+            "Rename to": st.column_config.TextColumn(
+                "Rename to", help="Edit and apply to rename this snapshot."
+            ),
+            "Delete": st.column_config.CheckboxColumn(
+                "Delete", help="Mark for deletion, then click Apply."
+            ),
+        },
+        hide_index=True,
+        width='stretch', #replaces: use_container_width=True,
+        key="snapshot_editor",
+    )
+
+    if st.button("Apply Snapshot Changes"):
+        renamed, deleted, errors = 0, 0, []
+        planned_names = set(snapshots)
+
+        for _, row in edited.iterrows():
+            old_name = row["Snapshot"]
+            new_name = row["Rename to"].strip()
+
+            if row["Delete"]:
+                try:
+                    bf_session.delete_snapshot(old_name)
+                    clear_snapshot_refs(old_name)
+                    planned_names.discard(old_name)
+                    deleted += 1
+                except Exception as e:
+                    errors.append(f"Delete '{old_name}': {e}")
+                continue
+
+            if new_name and new_name != old_name:
+                if new_name in planned_names:
+                    errors.append(f"Rename '{old_name}': '{new_name}' is already in use.")
+                    continue
+                try:
+                    bf_session.fork_snapshot(base_name=old_name, name=new_name, overwrite=True)
+                    bf_session.delete_snapshot(old_name)
+                    rename_snapshot_refs(old_name, new_name)
+                    planned_names.discard(old_name)
+                    planned_names.add(new_name)
+                    renamed += 1
+                except Exception as e:
+                    errors.append(f"Rename '{old_name}' to '{new_name}': {e}")
+
+        for err in errors:
+            st.error(err)
+
+        if renamed or deleted:
+            st.toast(f"Applied: {renamed} renamed, {deleted} deleted.", icon="✅")
+            st.rerun()
+
+    return bf_session.list_snapshots()
 
 
 def find_index(lst, item):
@@ -149,11 +271,22 @@ with st.expander("About", expanded=False):
 
 msg = test_connection(bf_host)
 if msg == "":
-    bf_session = get_or_create_session(bf_host, BASE_NETWORK_NAME)
-    upload_snapshot(bf_session)
-    st.markdown(f"**Batfish Server:** {bf_host}")
+    bf_session = get_or_create_session(bf_host)
 
-    snapshots = bf_session.list_snapshots()
+    st.session_state.network_name = st.text_input(
+        "Network Name",
+        value=st.session_state.network_name,
+        help=NETWORK_HELP,
+    ).strip() or st.session_state.network_name
+
+    switch_network(bf_session, st.session_state.network_name)
+    upload_snapshot(bf_session)
+
+    st.markdown(
+        f"**Batfish Server:** {bf_host}  \n**Network:** {st.session_state.network_name}"
+    )
+
+    snapshots = render_snapshot_manager(bf_session)
 
     if snapshots:
         st.header("Select Snapshots", help=SNAPSHOT)
@@ -168,9 +301,12 @@ if msg == "":
             "Main Snapshot", snapshots, index=idx, help="This is the base snapshot."
         )
 
-        st.session_state.activesnap["name"] = bf_session.set_snapshot(select_snapshot)
-        st.session_state.activesnap["failednodes"] = []
-        st.session_state.activesnap["failedinfs"] = []
+        if st.session_state.activesnap.get("name") != select_snapshot:
+            st.session_state.activesnap = {
+                "name": bf_session.set_snapshot(select_snapshot),
+                "failednodes": [],
+                "failedinfs": [],
+            }
 
         idx2 = (
             find_index(snapshots, st.session_state.altsnap["name"])
@@ -184,16 +320,6 @@ if msg == "":
             index=idx2,
             help="This snapshot is used for comparsions.",
         )
-
-        with st.sidebar:
-            if st.button("Delete Snapshot"):
-                bf_session.delete_snapshot(select_snapshot)
-                if st.session_state.get("activesnap", {}).get("name") == select_snapshot:
-                    st.session_state.activesnap = {}
-                if st.session_state.get("altsnap", {}).get("name") == select_snapshot:
-                    st.session_state.altsnap = {}
-                st.toast(f"Snapshot '{select_snapshot}' deleted.", icon="🗑️")
-                st.rerun()
     else:
         st.warning("Upload a network snapshot.")
 else:
