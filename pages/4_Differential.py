@@ -18,10 +18,12 @@ limitations under the License.
 import streamlit as st
 from pages.common.queries import run_query
 from pages.common.presenter import display_result_diff
-from pages.common.utils import convert_template
+from pages.common.utils import convert_template, init_session_state
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
+
+init_session_state()
 
 # Start Page Here
 st.set_page_config(layout="wide")

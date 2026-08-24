@@ -15,6 +15,24 @@ limitations under the License.
 """
 
 import re
+import streamlit as st
+
+
+def init_session_state():
+    """
+    Initializes default session state variables if they do not exist.
+    """
+    defaults = {
+        "bf_session": None,
+        "activesnap": {},
+        "altsnap": {},
+        "qlist": {},
+        "cats": {},
+        "last_uploaded_file": None,
+    }
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
 
 
 def get_same_prefix(input_item, item_list):

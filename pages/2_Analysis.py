@@ -18,22 +18,13 @@ limitations under the License.
 import streamlit as st
 from pages.common.queries import run_query, set_snapshot
 from pages.common.presenter import display_result, display_options
-from pages.common.utils import convert_template
+from pages.common.utils import convert_template, init_session_state
 import logging
 
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
-
-APP = """This is a Streamlit app that enables the user to run network analysis 
-queries using [Batfish](https://www.batfish.org/). 
-The app allows the user to select a Batfish question by category and name. 
-The app runs the selected question and displays the results in a table. 
-All answered questions are saved.
-
-Find more information about Batfish questions
-[here](https://batfish.readthedocs.io/en/latest/index.html).
-"""
+init_session_state()
 
 # Start Page Here
 st.set_page_config(layout="wide")

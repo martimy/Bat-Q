@@ -21,6 +21,7 @@ import streamlit as st
 from pybatfish.client.session import Session
 import logging
 import socket
+from pages.common.utils import init_session_state
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
@@ -64,30 +65,10 @@ Bat-Q, the folders must be compressed in .zip file.
 BASE_NETWORK_NAME = "NETWORK"
 
 # Initialize the session state
-
-# Initialize session state for Pybatfish session
-if "bf_session" not in st.session_state:
-    st.session_state.bf_session = None
-
-if "activesnap" not in st.session_state:
-    st.session_state.activesnap = {}
-
-if "altsnap" not in st.session_state:
-    st.session_state.altsnap = {}
-
-if "qlist" not in st.session_state:
-    st.session_state.qlist = {}
-
-if "cats" not in st.session_state:
-    st.session_state.cats = {}
-
-if "last_uploaded_file" not in st.session_state:
-    st.session_state.last_uploaded_file = None
-
-# End session states
+init_session_state()
 
 
-@st.cache_data
+@st.cache_data(ttl=60)
 def test_connection(host, port=9996):
     """
     Test connection to host
@@ -114,45 +95,51 @@ def test_connection(host, port=9996):
     return msg
 
 
+@st.cache_resource
+def get_batfish_session_resource(host: str, network: str):
+    """
+    Creates and caches the Batfish Session resource.
+    """
+    bf = Session(host=host)
+    bf.set_network(network)
+
+    # Delete existing snapshots upon initial connection
+    for snapshot in bf.list_snapshots():
+        try:
+            bf.delete_snapshot(snapshot)
+        except Exception:
+            pass
+
+    return bf
+
+
 def get_or_create_session(host, network):
     """
     Initializes or returns the active Batfish session stored in session_state.
     """
     if st.session_state.bf_session is None:
-        bf = Session(host=host)
-        bf.set_network(network)
-
-        # Delete existing snapshots upon initial connection
-        for snapshot in bf.list_snapshots():
-            bf.delete_snapshot(snapshot)
-
-        st.session_state.bf_session = bf
+        st.session_state.bf_session = get_batfish_session_resource(host, network)
 
     return st.session_state.bf_session
 
 
-# @st.cache_data
-# def init_snapshot(config_file, snapshot):
-#     bf_session.init_snapshot(config_file, name=snapshot, overwrite=True)
-
-
 def upload_snapshot(bf_session):
-    uploaded_file = st.sidebar.file_uploader("Add network snapshot", type="zip")
-    if uploaded_file is not None:
-        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-        if st.session_state.get("last_uploaded_file") != file_id:
-            new_name = uploaded_file.name.rsplit(".", 1)[0]
-            try:
-                # Updated from legacy bf_init_snapshot
-                bf_session.init_snapshot(uploaded_file, name=new_name, overwrite=True)
-                bf_session.set_snapshot(new_name)
-                st.session_state.last_uploaded_file = file_id
-                st.session_state.activesnap["name"] = new_name
-                st.session_state.activesnap["failednodes"] = []
-                st.session_state.activesnap["failedinfs"] = []
-                st.rerun()
-            except Exception as e:
-                st.sidebar.error(f"File {uploaded_file.name} is not recognized! Error: {e}")
+    with st.sidebar:
+        uploaded_file = st.file_uploader("Add network snapshot", type="zip")
+        if uploaded_file is not None:
+            file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+            if st.session_state.get("last_uploaded_file") != file_id:
+                new_name = uploaded_file.name.rsplit(".", 1)[0]
+                try:
+                    bf_session.init_snapshot(uploaded_file, name=new_name, overwrite=True)
+                    bf_session.set_snapshot(new_name)
+                    st.session_state.last_uploaded_file = file_id
+                    st.session_state.activesnap["name"] = new_name
+                    st.session_state.activesnap["failednodes"] = []
+                    st.session_state.activesnap["failedinfs"] = []
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"File {uploaded_file.name} is not recognized! Error: {e}")
 
 
 def find_index(lst, item):
@@ -211,14 +198,15 @@ if msg == "":
             help="This snapshot is used for comparsions.",
         )
 
-        if st.sidebar.button("Delete Snapshot"):
-            # Updated from legacy bf_delete_snapshot
-            bf_session.delete_snapshot(select_snapshot)
-            if st.session_state.get("activesnap", {}).get("name") == select_snapshot:
-                st.session_state.activesnap = {}
-            if st.session_state.get("altsnap", {}).get("name") == select_snapshot:
-                st.session_state.altsnap = {}
-            st.rerun()
+        with st.sidebar:
+            if st.button("Delete Snapshot"):
+                # Updated from legacy bf_delete_snapshot
+                bf_session.delete_snapshot(select_snapshot)
+                if st.session_state.get("activesnap", {}).get("name") == select_snapshot:
+                    st.session_state.activesnap = {}
+                if st.session_state.get("altsnap", {}).get("name") == select_snapshot:
+                    st.session_state.altsnap = {}
+                st.rerun()
     else:
         st.warning("Upload a network snapshot.")
 else:
