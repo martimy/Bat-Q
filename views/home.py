@@ -20,7 +20,7 @@ import streamlit as st
 from pybatfish.client.session import Session
 import logging
 import socket
-from pages.common.utils import init_session_state
+from common.utils import init_session_state
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 

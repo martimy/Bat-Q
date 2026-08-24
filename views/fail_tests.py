@@ -16,15 +16,15 @@ limitations under the License.
 """
 
 import streamlit as st
-from pages.common.queries import (
+from common.queries import (
     run_query,
     get_node_properties,
     get_interface_properties,
     fork_snapshot,
     set_snapshot,
 )
-from pages.common.presenter import display_result
-from pages.common.utils import convert_template, init_session_state
+from common.presenter import display_result
+from common.utils import convert_template, init_session_state
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)

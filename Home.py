@@ -16,7 +16,7 @@ limitations under the License.
 """
 
 import streamlit as st
-from pages.common.utils import init_session_state
+from common.utils import init_session_state
 
 # Initialize session state globally
 init_session_state()
