@@ -22,18 +22,28 @@ import streamlit as st
 # from pybatfish.datamodel import PathConstraints, HeaderConstraints
 # from pybatfish.client.commands import bf_set_snapshot, bf_fork_snapshot
 
-bf = st.session_state.bf_session
-bfq = bf.q
+def get_bf_session():
+    """
+    Returns the active Batfish session from session_state.
+    """
+    bf = st.session_state.get("bf_session")
+    if bf is None:
+        raise RuntimeError("Batfish session is not initialized. Please connect on the Home page.")
+    return bf
+
 
 def get_node_properties():
-    return bfq.nodeProperties().answer().frame()["Node"]
+    bf = get_bf_session()
+    return bf.q.nodeProperties().answer().frame()["Node"]
 
 
 def get_interface_properties():
-    return bfq.interfaceProperties().answer().frame()["Interface"]
+    bf = get_bf_session()
+    return bf.q.interfaceProperties().answer().frame()["Interface"]
 
 
 def set_snapshot(active_snapshot):
+    bf = get_bf_session()
     return bf.set_snapshot(active_snapshot)
 
 
@@ -47,13 +57,15 @@ def set_snapshot(active_snapshot):
 #     )
 
 def fork_snapshot(active_snapshot, failed_nodes=None, failed_interfaces=None):
+    bf = get_bf_session()
     bf.fork_snapshot(
-        base_name = active_snapshot,
-        name = active_snapshot + "_Fail",
+        base_name=active_snapshot,
+        name=active_snapshot + "_Fail",
         deactivate_nodes=failed_nodes,
         deactivate_interfaces=failed_interfaces,
         overwrite=True,
     )
+
 
 # def get_params(param_list):
 #     """
@@ -91,7 +103,8 @@ def run_query(question, snapshots=None):
     question_fun = question["fun"]
     try:
         # Run query
-        fun = getattr(bfq, question_fun)
+        bf = get_bf_session()
+        fun = getattr(bf.q, question_fun)
         qargs = question.get("options")
 
         if snapshots:  # for comparisions

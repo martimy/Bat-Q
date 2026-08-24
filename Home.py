@@ -81,6 +81,9 @@ if "qlist" not in st.session_state:
 if "cats" not in st.session_state:
     st.session_state.cats = {}
 
+if "last_uploaded_file" not in st.session_state:
+    st.session_state.last_uploaded_file = None
+
 # End session states
 
 
@@ -135,14 +138,21 @@ def get_or_create_session(host, network):
 
 def upload_snapshot(bf_session):
     uploaded_file = st.sidebar.file_uploader("Add network snapshot", type="zip")
-    if uploaded_file:
-        new_name = uploaded_file.name.split(".")[0]
-        try:
-            # Updated from legacy bf_init_snapshot
-            bf_session.init_snapshot(uploaded_file, name=new_name, overwrite=True)
-            bf_session.set_snapshot(new_name)
-        except Exception as e:
-            st.sidebar.error(f"File {uploaded_file.name} is not recognized! Error: {e}")
+    if uploaded_file is not None:
+        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+        if st.session_state.get("last_uploaded_file") != file_id:
+            new_name = uploaded_file.name.rsplit(".", 1)[0]
+            try:
+                # Updated from legacy bf_init_snapshot
+                bf_session.init_snapshot(uploaded_file, name=new_name, overwrite=True)
+                bf_session.set_snapshot(new_name)
+                st.session_state.last_uploaded_file = file_id
+                st.session_state.activesnap["name"] = new_name
+                st.session_state.activesnap["failednodes"] = []
+                st.session_state.activesnap["failedinfs"] = []
+                st.rerun()
+            except Exception as e:
+                st.sidebar.error(f"File {uploaded_file.name} is not recognized! Error: {e}")
 
 
 def find_index(lst, item):
@@ -204,7 +214,10 @@ if msg == "":
         if st.sidebar.button("Delete Snapshot"):
             # Updated from legacy bf_delete_snapshot
             bf_session.delete_snapshot(select_snapshot)
-            st.session_state.activesnap = {}
+            if st.session_state.get("activesnap", {}).get("name") == select_snapshot:
+                st.session_state.activesnap = {}
+            if st.session_state.get("altsnap", {}).get("name") == select_snapshot:
+                st.session_state.altsnap = {}
             st.rerun()
     else:
         st.warning("Upload a network snapshot.")

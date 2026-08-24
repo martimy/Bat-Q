@@ -17,6 +17,7 @@ limitations under the License.
 
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 from pages.common.plotting import get_topology, get_routing_topology, plot_figure
 
 NO_DATA = """No data available!
@@ -257,12 +258,14 @@ def display_result(question, answer):
         if question in topology_questions:
             _, col, _ = st.columns([1, 2, 1])
             fig = plot_figure(get_topology(answer.frame()))
-            col.pyplot(fig)
+            col.pyplot(fig, clear_figure=True)
+            plt.close(fig)
 
         elif question == "bgpEdges":
             _, col, _ = st.columns([1, 2, 1])
             fig = plot_figure(get_routing_topology(answer.frame()))
-            col.pyplot(fig)
+            col.pyplot(fig, clear_figure=True)
+            plt.close(fig)
 
     except Exception as e:
         st.error(f"Unable to display formatted answer. Error: {e}")
