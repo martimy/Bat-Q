@@ -18,8 +18,7 @@ limitations under the License.
 import streamlit as st
 import pandas as pd
 #import matplotlib.pyplot as plt
-#from common.plotting import get_topology, get_routing_topology, plot_figure
-from common.plotting import get_topology, get_routing_topology, plot_plotly # renamed function
+from common.plotting import get_topology, get_routing_topology, plot_plotly
 
 NO_DATA = """No data available!
 This usually means that the query is not applicable to the network.
@@ -231,6 +230,15 @@ def display_result(question, answer):
         elif question == "bgpEdges":
             fig = plot_plotly(get_routing_topology(answer.frame()))
             st.plotly_chart(fig, width="stretch")
+
+        # --- Using (Pyvis) ---
+        # if question in topology_questions:
+        #     g = get_topology(answer.frame())
+        #     plot_pyvis(g)
+
+        # elif question == "bgpEdges":
+        #     g = get_routing_topology(answer.frame())
+        #     plot_pyvis(g)
 
     except Exception as e:
         st.error(f"Unable to display formatted answer. Error: {e}")

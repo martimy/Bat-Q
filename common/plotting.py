@@ -17,9 +17,9 @@ limitations under the License.
 
 import json
 import networkx as nx
-import matplotlib.pyplot as plt
-#from pyvis.network import Network
-#import streamlit.components.v1 as components
+# import matplotlib.pyplot as plt
+# from pyvis.network import Network
+# import streamlit.components.v1 as components # replace with st.iframe
 import plotly.graph_objects as go
 
 # def get_topology(edges):
@@ -65,7 +65,7 @@ def get_routing_topology(edges):
 #     nx.draw(g, pos, with_labels=True, ax=ax, node_size=1000, font_color="white")
 #     return fig
 
-# def plot_figure(g, height="450px"):
+# def plot_pyvis(g, height="450px"):
 #     net = Network(height=height, width="100%", bgcolor="#0e1117", font_color="white", notebook=False)
 #     net.from_nx(g)
     
