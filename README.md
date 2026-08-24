@@ -49,7 +49,7 @@ or, to run on local host:
 
 ### Bat-Q host
 
-1. Check Python version and install pip3. Bat-Q needs Python 3.8+:
+1. Check Python version and install pip3. Bat-Q needs Python 3.11+:
 
     ```bash
     $ python3 --version
