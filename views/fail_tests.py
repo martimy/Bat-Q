@@ -72,7 +72,9 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
 
             # Create a new snapshot by forking the active snapshot
             if failed_nodes or failed_interfaces:
-                fork_snapshot(active_snapshot, failed_nodes, failed_interfaces)
+                with st.status("Forking snapshot with failures...", expanded=False) as status:
+                    fork_snapshot(active_snapshot, failed_nodes, failed_interfaces)
+                    status.update(label="Snapshot forked", state="complete")
 
                 # Run selected questions
                 qs = convert_template(qlist)
@@ -80,7 +82,19 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
                 tabs = st.tabs(q_names)
                 for idx, tab in enumerate(tabs):
                     with tab:
-                        answer = run_query(qs[idx])
+                        with st.status(
+                            f"Running '{qs[idx]['name']}'...", expanded=False
+                        ) as status:
+                            answer = run_query(qs[idx])
+                            if answer is None:
+                                status.update(
+                                    label=f"'{qs[idx]['name']}' failed", state="error"
+                                )
+                            else:
+                                status.update(
+                                    label=f"'{qs[idx]['name']}' complete", state="complete"
+                                )
+
                         display_result(qs[idx]["fun"], answer)
 
         except Exception as e:

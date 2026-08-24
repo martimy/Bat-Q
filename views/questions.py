@@ -149,7 +149,8 @@ if saved_questions:
             st.session_state.cats = get_cat_quest_dict(loaded["questions"])
             st.toast("Questions loaded from file!", icon="📂")
     except Exception as e:
-        st.sidebar.error(f"Error loading questions: {e}")
+        with st.sidebar:
+            st.error(f"Error loading questions: {e}")
 
 qlist = st.session_state.get("qlist", {})
 new_qlist = {}
@@ -209,6 +210,11 @@ with col2:
 # Sidebar YAML export
 yaml_output = yaml.dump({"questions": qlist})
 
+
+def notify_saved():
+    st.toast("Selections saved to select_questions.yaml", icon="💾")
+
+
 with st.sidebar:
     st.download_button(
         label="💾 Save Selections to YAML",
@@ -216,4 +222,5 @@ with st.sidebar:
         file_name="select_questions.yaml",
         mime="text/yaml",
         help="Download selected questions and parameters to a local YAML file.",
+        on_click=notify_saved,
     )
