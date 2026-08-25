@@ -264,9 +264,8 @@ def find_index(lst, item):
 # Page View Logic
 bf_host = os.getenv("BATFISH_SERVER") or "127.0.0.1"
 
-st.title("Bat-Q")
-
 with st.expander("About", expanded=False):
+    st.image("docs/pics/logo.svg", width=240)
     st.markdown(INTRO)
 
 msg = test_connection(bf_host)

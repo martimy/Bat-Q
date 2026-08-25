@@ -31,15 +31,19 @@ st.set_page_config(
 # Modern multi-page routing via st.navigation
 pages = {
     "Network Setup": [
-        st.Page("views/home.py", title="Snapshots & Setup", icon="🏠", default=True),
-        st.Page("views/questions.py", title="Questions", icon="❓"),
+        st.Page("views/home.py", title="Snapshots & Setup", default=True),
+        st.Page("views/questions.py", title="Questions"),
     ],
     "Analysis & Verification": [
-        st.Page("views/analysis.py", title="Network Analysis", icon="📊"),
-        st.Page("views/fail_tests.py", title="Failure Tests", icon="⚠️"),
-        st.Page("views/differential.py", title="Differential", icon="⚖️"),
+        st.Page("views/analysis.py", title="Network Analysis"),
+        st.Page("views/fail_tests.py", title="Failure Tests"),
+        st.Page("views/differential.py", title="Differential"),
     ],
 }
 
 pg = st.navigation(pages)
+
+# Common UI elements (This shows up on EVERY view page)
+st.logo("docs/pics/logo.svg", size="large", link=None, icon_image=None)
+
 pg.run()
