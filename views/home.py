@@ -152,7 +152,9 @@ def upload_snapshot(bf_session):
                 new_name = unique_snapshot_name(base_name, existing)
 
                 try:
-                    bf_session.init_snapshot(uploaded_file, name=new_name, overwrite=False)
+                    bf_session.init_snapshot(
+                        uploaded_file, name=new_name, overwrite=False
+                    )
                     bf_session.set_snapshot(new_name)
                     st.session_state.last_uploaded_file = file_id
                     st.session_state.activesnap = {
@@ -194,7 +196,9 @@ def render_snapshot_manager(bf_session):
         st.info("No snapshots yet. Upload one from the sidebar to get started.")
         return snapshots
 
-    table = pd.DataFrame({"Snapshot": snapshots, "Rename to": snapshots, "Delete": False})
+    table = pd.DataFrame(
+        {"Snapshot": snapshots, "Rename to": snapshots, "Delete": False}
+    )
 
     edited = st.data_editor(
         table,
@@ -208,7 +212,7 @@ def render_snapshot_manager(bf_session):
             ),
         },
         hide_index=True,
-        width='stretch', #replaces: use_container_width=True,
+        width="stretch",  # replaces: use_container_width=True,
         key="snapshot_editor",
     )
 
@@ -232,10 +236,14 @@ def render_snapshot_manager(bf_session):
 
             if new_name and new_name != old_name:
                 if new_name in planned_names:
-                    errors.append(f"Rename '{old_name}': '{new_name}' is already in use.")
+                    errors.append(
+                        f"Rename '{old_name}': '{new_name}' is already in use."
+                    )
                     continue
                 try:
-                    bf_session.fork_snapshot(base_name=old_name, name=new_name, overwrite=True)
+                    bf_session.fork_snapshot(
+                        base_name=old_name, name=new_name, overwrite=True
+                    )
                     bf_session.delete_snapshot(old_name)
                     rename_snapshot_refs(old_name, new_name)
                     planned_names.discard(old_name)
@@ -272,11 +280,14 @@ msg = test_connection(bf_host)
 if msg == "":
     bf_session = get_or_create_session(bf_host)
 
-    st.session_state.network_name = st.text_input(
-        "Network Name",
-        value=st.session_state.network_name,
-        help=NETWORK_HELP,
-    ).strip() or st.session_state.network_name
+    st.session_state.network_name = (
+        st.text_input(
+            "Network Name",
+            value=st.session_state.network_name,
+            help=NETWORK_HELP,
+        ).strip()
+        or st.session_state.network_name
+    )
 
     switch_network(bf_session, st.session_state.network_name)
     upload_snapshot(bf_session)

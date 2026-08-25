@@ -24,7 +24,9 @@ def get_bf_session():
     """
     bf = st.session_state.get("bf_session")
     if bf is None:
-        raise RuntimeError("Batfish session is not initialized. Please connect on the Home page.")
+        raise RuntimeError(
+            "Batfish session is not initialized. Please connect on the Home page."
+        )
     return bf
 
 
@@ -81,6 +83,7 @@ def run_query(question, snapshots=None):
                 answer = fun().answer()
 
     except Exception as e:
+        # TODO: either send to logs or display on screen
         print(e)
     finally:
         return answer

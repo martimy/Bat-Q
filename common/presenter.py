@@ -17,7 +17,8 @@ limitations under the License.
 
 import streamlit as st
 import pandas as pd
-#import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 from common.plotting import get_topology, get_routing_topology, plot_plotly
 
 NO_DATA = """No data available!
@@ -67,9 +68,10 @@ def build_column_config(df):
 #     options = {**default_frame_options, **overrides}
 #     st.dataframe(df, column_config=build_column_config(df), **options)
 
+
 def show_dataframe(df, **overrides):
     """
-    Thin wrapper around st.dataframe that applies default display options 
+    Thin wrapper around st.dataframe that applies default display options
     and converts custom object columns to strings so PyArrow can serialize them.
     """
     df_clean = df.copy()
@@ -81,6 +83,7 @@ def show_dataframe(df, **overrides):
 
     options = {**default_frame_options, **overrides}
     st.dataframe(df_clean, column_config=build_column_config(df_clean), **options)
+
 
 def format_result(result):
     """
