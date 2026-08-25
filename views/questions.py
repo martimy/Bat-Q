@@ -124,7 +124,9 @@ def render_question_config(question, data, input_fields):
                 st.rerun(scope="fragment")
 
         with col_btn2:
-            if len(variants) > 1 and st.button("🗑️ Remove Variant", key=f"del_{question}"):
+            if len(variants) > 1 and st.button(
+                "🗑️ Remove Variant", key=f"del_{question}"
+            ):
                 variants.pop()
                 st.rerun(scope="fragment")
 
@@ -166,7 +168,9 @@ with col1:
         st.markdown(f"### {category_name}")
 
         if show_desc:
-            category_desc = selected_category.get("description", "No description available.")
+            category_desc = selected_category.get(
+                "description", "No description available."
+            )
             st.caption(category_desc)
 
         questions_list = [

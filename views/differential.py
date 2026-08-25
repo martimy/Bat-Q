@@ -72,4 +72,6 @@ if (
         st.warning("Select some questions to proceed.")
 
 else:
-    st.warning("Please add and select two distinct snapshots on the Home page to continue.")
+    st.warning(
+        "Please add and select two distinct snapshots on the Home page to continue."
+    )

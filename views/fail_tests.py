@@ -72,7 +72,9 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
 
             # Create a new snapshot by forking the active snapshot
             if failed_nodes or failed_interfaces:
-                with st.status("Forking snapshot with failures...", expanded=False) as status:
+                with st.status(
+                    "Forking snapshot with failures...", expanded=False
+                ) as status:
                     fork_snapshot(active_snapshot, failed_nodes, failed_interfaces)
                     status.update(label="Snapshot forked", state="complete")
 
@@ -92,7 +94,8 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
                                 )
                             else:
                                 status.update(
-                                    label=f"'{qs[idx]['name']}' complete", state="complete"
+                                    label=f"'{qs[idx]['name']}' complete",
+                                    state="complete",
                                 )
 
                         display_result(qs[idx]["fun"], answer)
