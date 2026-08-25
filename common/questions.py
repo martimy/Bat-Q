@@ -745,6 +745,24 @@ json_data = r"""
             }
           ],
           "name": "Find Matching Filter Lines"
+        },
+        {
+          "fun": "snmpCommunityClients",
+          "input": [
+            {
+              "name": "community",
+              "optional": false
+            },
+            {
+              "name": "clients",
+              "type": "IpSpec"
+            },
+            {
+              "name": "nodes",
+              "type": "NodeSpec"
+            }
+          ],
+          "name": "Check SNMP Community Clients"
         }
       ]
     },
