@@ -100,7 +100,7 @@ def render_question_config(question, data, input_fields):
     Fragment-isolated component to configure parameters and variants for a single question.
     """
     with st.container(border=True):
-        st.markdown(f"#### ❓ {question}")
+        st.markdown(f"#### {question}")
 
         if not input_fields:
             st.info("This question runs without additional parameters.")
