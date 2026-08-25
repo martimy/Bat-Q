@@ -425,13 +425,26 @@ json_data = r"""
           "fun": "testRoutePolicies",
           "input": [
             {
-              "name": "nodes"
+              "name": "nodes",
+              "type": "NodeSpec"
             },
             {
-              "name": "policies"
+              "name": "policies",
+              "type": "RoutingPolicySpec"
             },
-            "inputRoutes",
-            "direction"
+            {
+              "name": "inputRoutes",
+              "optional": false,
+              "type": "BgpRoute"
+            },
+            {
+              "name": "direction",
+              "optional": false
+            },
+            {
+              "name": "bgpSessionProperties",
+              "type": "BgpSessionProperties"
+            }
           ],
           "name": "Test Route Policies"
         },

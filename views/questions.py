@@ -18,7 +18,7 @@ limitations under the License.
 import ast
 import yaml
 import streamlit as st
-from common.questions import read_questions
+from common.bfqs import read_questions
 from common.utils import init_session_state
 
 QUESTIONS_INPUT = """
