@@ -78,7 +78,6 @@ def update_selected_questions(q_name):
 def update_expanded_cats(cat_name):
     states = st.session_state.get("cats_expander", [])
     expanded = st.session_state[cat_name]
-    print(cat_name, expanded)
     if cat_name in states and not expanded:
         states.remove(cat_name)
     elif cat_name not in states and expanded:
@@ -123,10 +122,17 @@ def generate_input_fields(inputs, question_name, variant_idx=0, defaults=None):
 def render_question_config(question, data, input_fields):
     """
     Fragment-isolated component to configure parameters and variants for a single question.
+    Collapsed by default (st.popover) since this renders inside an already-open
+    category expander, and Streamlit does not allow nesting expanders.
     """
-    with st.container(border=True):
-        st.markdown(f"#### {question}")
+    variants_preview = data.get("variants", [{}])
+    has_values = any(variant_opts for variant_opts in variants_preview)
 
+    with st.popover(
+        question,
+        use_container_width=True,
+        icon=":material/check:" if has_values else None,
+    ):
         if not input_fields:
             st.info("This question runs without additional parameters.")
             return
@@ -143,14 +149,14 @@ def render_question_config(question, data, input_fields):
 
         col_btn1, col_btn2 = st.columns([1, 1])
         with col_btn1:
-            if st.button("[+] Add Variant (Clone)", key=f"clone_{question}"):
+            if st.button(":material/add: Add Variant (Clone)", key=f"clone_{question}"):
                 last_variant = variants[-1].copy() if variants else {}
                 variants.append(last_variant)
                 st.rerun(scope="fragment")
 
         with col_btn2:
             if len(variants) > 1 and st.button(
-                "🗑️ Remove Variant", key=f"del_{question}"
+                ":material/delete: Remove Variant", key=f"del_{question}"
             ):
                 variants.pop()
                 st.rerun(scope="fragment")
@@ -197,34 +203,33 @@ if saved_questions:
         if "questions" in loaded:
             st.session_state.qlist = loaded["questions"]
             st.session_state.cats = get_cat_quest_dict(loaded["questions"])
-            st.toast("Questions loaded from file!", icon="📂")
+            st.toast("Questions loaded from file!", icon=":material/folder:")
     except Exception as e:
         with st.sidebar:
             st.error(f"Error loading questions: {e}")
 
 
-col1, col2 = st.columns(2, gap="large")
+st.markdown(QUESTIONS_CATEGORIES)
 
-with col1:
-    st.subheader("Select Questions")
-    st.markdown(QUESTIONS_CATEGORIES)
-    for selected_category in bf_questions:
-        category_name = selected_category.get("category")
-        if category_name:
-            with st.expander(
-                category_name,
-                key=category_name,
-                expanded=category_name in cats_expander,
-                on_change=update_expanded_cats,
-                args=(category_name,),
-            ):
-                questions_list = [
-                    item["name"]
-                    for item in selected_category.get("questions", [])
-                    if item.get("name")
-                ]
+for selected_category in bf_questions:
+    category_name = selected_category.get("category")
+    if category_name:
+        with st.expander(
+            category_name,
+            key=category_name,
+            expanded=category_name in cats_expander,
+            on_change=update_expanded_cats,
+            args=(category_name,),
+        ):
+            questions_list = [
+                item["name"]
+                for item in selected_category.get("questions", [])
+                if item.get("name")
+            ]
 
-                st.subheader("Select Questions")
+            select_col, config_col = st.columns([1, 2], gap="large")
+
+            with select_col:
                 for question_name in questions_list:
                     st.checkbox(
                         question_name,
@@ -234,17 +239,18 @@ with col1:
                         key=question_name,
                     )
 
-
-with col2:
-    st.subheader("Configure Parameters")
-    if qlist:
-        st.markdown(QUESTIONS_INPUT)
-        for question, data in qlist.items():
-            input_fields = quest_dict.get(question, {}).get("input", [])
-            if input_fields:
-                render_question_config(question, data, input_fields)
-    else:
-        st.info("Select questions from the left column to configure their parameters.")
+            with config_col:
+                selected_in_category = [
+                    question_name
+                    for question_name in questions_list
+                    if question_name in qlist
+                ]
+                for question_name in selected_in_category:
+                    input_fields = quest_dict.get(question_name, {}).get("input", [])
+                    if input_fields:
+                        render_question_config(
+                            question_name, qlist[question_name], input_fields
+                        )
 
 
 # Sidebar YAML export
@@ -252,12 +258,12 @@ yaml_output = yaml.dump({"questions": qlist})
 
 
 def notify_saved():
-    st.toast("Selections saved to select_questions.yaml", icon="💾")
+    st.toast("Selections saved to select_questions.yaml", icon=":material/save:")
 
 
 with st.sidebar:
     st.download_button(
-        label="💾 Save Selections to YAML",
+        label=":material/download: Save Selections to YAML",
         data=yaml_output,
         file_name="select_questions.yaml",
         mime="text/yaml",
