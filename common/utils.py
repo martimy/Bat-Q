@@ -31,6 +31,7 @@ def init_session_state():
         "altsnap": {},
         "qlist": {},
         "cats": {},
+        "cats_expander": [],
         "last_uploaded_file": None,
     }
     for key, value in defaults.items():
