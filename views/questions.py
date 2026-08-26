@@ -21,9 +21,14 @@ import streamlit as st
 from common.bfqs import read_questions
 from common.utils import init_session_state
 
+QUESTIONS_HELP = """
+For more details on parameter syntax, see the [Batfish Documentation](https://batfish.readthedocs.io/).
+"""
 QUESTIONS_INPUT = """
-Enter question parameters below. For more details on parameter syntax, 
-see the [Batfish Documentation](https://batfish.readthedocs.io/).
+Enter question parameters below.
+"""
+QUESTIONS_CATEGORIES = """
+Select questions from one of more categories below.
 """
 
 init_session_state()
@@ -57,8 +62,28 @@ def get_cat_quest_dict(dict_data):
     return result
 
 
-def update_list(key):
-    st.session_state.cats[key] = st.session_state[key]
+def update_selected_questions(q_name):
+    quest_dict = get_questions_dict(bf_questions)
+    current_value = st.session_state[q_name]
+
+    if q_name in st.session_state.qlist and not current_value:
+        st.session_state.qlist.pop(q_name, None)
+    elif q_name not in st.session_state.qlist and current_value:
+        st.session_state.qlist[q_name] = {
+            "category": quest_dict[q_name]["category"],
+            "fun": quest_dict[q_name]["fun"],
+        }
+
+
+def update_expanded_cats(cat_name):
+    states = st.session_state.get("cats_expander", [])
+    expanded = st.session_state[cat_name]
+    print(cat_name, expanded)
+    if cat_name in states and not expanded:
+        states.remove(cat_name)
+    elif cat_name not in states and expanded:
+        states.append(cat_name)
+    st.session_state["cats_expander"] = states
 
 
 def generate_input_fields(inputs, question_name, variant_idx=0, defaults=None):
@@ -118,7 +143,7 @@ def render_question_config(question, data, input_fields):
 
         col_btn1, col_btn2 = st.columns([1, 1])
         with col_btn1:
-            if st.button("➕ Add Variant (Clone)", key=f"clone_{question}"):
+            if st.button("[+] Add Variant (Clone)", key=f"clone_{question}"):
                 last_variant = variants[-1].copy() if variants else {}
                 variants.append(last_variant)
                 st.rerun(scope="fragment")
@@ -131,13 +156,36 @@ def render_question_config(question, data, input_fields):
                 st.rerun(scope="fragment")
 
 
-st.header("Questions")
+st.header("Questions", help=QUESTIONS_HELP)
 
 # Load questions schema
 bf_questions = read_questions()["Batfish"]
 quest_dict = get_questions_dict(bf_questions)
 
+
+left, right = st.columns(2, gap="xxsmall", width=260)
+with left:
+    if st.button(label="Expand All", icon=":material/expand_all:", width=120):
+        st.session_state["cats_expander"] = [
+            selected_category.get("category") for selected_category in bf_questions
+        ]
+with right:
+    if st.button(label="Collapse All", icon=":material/collapse_all:", width=120):
+        st.session_state["cats_expander"] = []
+
+
+cats_expander = st.session_state.get("cats_expander", {})
+qlist = st.session_state.get("qlist", {})
+new_qlist = {}
+
+
 with st.sidebar:
+    st.subheader("Selected Questions")
+    if qlist:
+        st.markdown("- " + "\n- ".join(qlist.keys()))
+    else:
+        st.markdown("No questions selected yet.")
+
     st.subheader("Manage Selections")
     saved_questions = st.file_uploader(
         "Upload Questions", type="yaml", help="Load saved questions from a YAML file."
@@ -154,52 +202,38 @@ if saved_questions:
         with st.sidebar:
             st.error(f"Error loading questions: {e}")
 
-qlist = st.session_state.get("qlist", {})
-new_qlist = {}
 
 col1, col2 = st.columns(2, gap="large")
 
 with col1:
     st.subheader("Select Questions")
-    show_desc = st.checkbox("Show Category Descriptions", value=False, key="qshelp")
-
+    st.markdown(QUESTIONS_CATEGORIES)
     for selected_category in bf_questions:
-        category_name = selected_category.get("category", "")
-        st.markdown(f"### {category_name}")
+        category_name = selected_category.get("category")
+        if category_name:
+            with st.expander(
+                category_name,
+                key=category_name,
+                expanded=category_name in cats_expander,
+                on_change=update_expanded_cats,
+                args=(category_name,),
+            ):
+                questions_list = [
+                    item["name"]
+                    for item in selected_category.get("questions", [])
+                    if item.get("name")
+                ]
 
-        if show_desc:
-            category_desc = selected_category.get(
-                "description", "No description available."
-            )
-            st.caption(category_desc)
+                st.subheader("Select Questions")
+                for question_name in questions_list:
+                    st.checkbox(
+                        question_name,
+                        value=question_name in qlist,
+                        on_change=update_selected_questions,
+                        args=(question_name,),
+                        key=question_name,
+                    )
 
-        questions_list = [
-            item["name"]
-            for item in selected_category.get("questions", [])
-            if item.get("name")
-        ]
-
-        selected_questions = st.multiselect(
-            f"Questions in {category_name}",
-            questions_list,
-            key=category_name,
-            default=st.session_state.cats.get(category_name, []),
-            on_change=update_list,
-            kwargs={"key": category_name},
-            label_visibility="collapsed",
-        )
-
-        for q_name in selected_questions:
-            if q_name in qlist:
-                new_qlist[q_name] = qlist[q_name]
-            else:
-                new_qlist[q_name] = {
-                    "category": quest_dict[q_name]["category"],
-                    "fun": quest_dict[q_name]["fun"],
-                }
-
-st.session_state.qlist = new_qlist
-qlist = new_qlist
 
 with col2:
     st.subheader("Configure Parameters")
@@ -207,9 +241,11 @@ with col2:
         st.markdown(QUESTIONS_INPUT)
         for question, data in qlist.items():
             input_fields = quest_dict.get(question, {}).get("input", [])
-            render_question_config(question, data, input_fields)
+            if input_fields:
+                render_question_config(question, data, input_fields)
     else:
         st.info("Select questions from the left column to configure their parameters.")
+
 
 # Sidebar YAML export
 yaml_output = yaml.dump({"questions": qlist})
