@@ -85,16 +85,33 @@ def show_dataframe(df, **overrides):
     st.dataframe(df_clean, column_config=build_column_config(df_clean), **options)
 
 
+def _is_empty_value(y):
+    """
+    Treat None/NaN, empty (or whitespace-only) strings, and empty
+    list/tuple/set/dict values as "empty" so they can be caught when
+    deciding whether a whole column is empty. Batfish frequently returns
+    empty lists or blank strings instead of None, which plain isna()
+    checks miss.
+    """
+    if y is None:
+        return True
+    if isinstance(y, (list, tuple, set, dict)):
+        return len(y) == 0
+    if isinstance(y, str):
+        return y.strip() == ""
+    try:
+        return bool(pd.isna(y))
+    except (TypeError, ValueError):
+        return False
+
+
 def format_result(result):
     """
     Format Pandas dataframe to eliminate empty columns.
     """
     for c in result.columns:
-        result[c] = result[c].apply(
-            lambda y: nan if isinstance(y, list) and len(y) == 0 else y
-        )
+        result[c] = result[c].apply(lambda y: nan if _is_empty_value(y) else y)
 
-    result = result.replace("", nan)
     filtered_df = result.dropna(axis=1, how="all")
     filtered_df = filtered_df.replace(nan, "")
     removed = set(result.columns) - set(filtered_df.columns)
@@ -102,8 +119,8 @@ def format_result(result):
 
 
 def format_result_lite(df):
-    columns_without_none = df.columns[~df.isna().all()]
-    filtered_df = df.loc[:, columns_without_none]
+    all_empty = df.apply(lambda col: col.map(_is_empty_value).all())
+    filtered_df = df.loc[:, ~all_empty]
     removed = set(df.columns) - set(filtered_df.columns)
     return filtered_df, removed
 
