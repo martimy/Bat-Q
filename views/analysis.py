@@ -37,27 +37,17 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
     # Run selected questions
     if qlist:
         qs = convert_template(qlist)
-        q_names = [q["name"] for q in qs]
-        tabs = st.tabs(q_names)
-        for idx, tab in enumerate(tabs):
-            with tab:
-                if qs[idx].get("options"):
-                    display_options(qs[idx]["options"])
-
-                with st.status(
-                    f"Running '{qs[idx]['name']}'...", expanded=False
-                ) as status:
-                    answer = run_query(qs[idx])
-                    if answer is None:
-                        status.update(
-                            label=f"'{qs[idx]['name']}' failed", state="error"
-                        )
-                    else:
-                        status.update(
-                            label=f"'{qs[idx]['name']}' complete", state="complete"
-                        )
-
-                display_result(qs[idx]["fun"], answer)
+        for q in qs:
+            qn = q["name"]
+            with st.status(f"Running '{qn}'...", expanded=False) as status:
+                if q.get("options"):
+                    display_options(q["options"])
+                answer = run_query(q)
+                if answer is None:
+                    status.update(label=f"'{qn}' failed", state="error")
+                else:
+                    status.update(label=f"'{qn}' complete", state="complete")
+                display_result(q["fun"], answer)
 
     else:
         st.warning("Select some questions to proceed.")
