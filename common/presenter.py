@@ -135,7 +135,7 @@ def dict_to_str(data: dict):
 
 
 def display_options(d):
-    st.write(f"**Options:** {dict_to_str(d)}")
+    st.info(dict_to_str(d), title="Options")
 
 
 def json_to_dataframe(trace):
@@ -214,9 +214,7 @@ def display_result(question, answer):
 
             if removed:
                 removed_str = ", ".join(list(removed))
-                st.markdown(
-                    f"The query returned these empty columns:  \n{removed_str}."
-                )
+                st.info(removed_str, title="Empty Columns")
         else:
             filtered_df, removed = format_result_lite(answer.frame())
             if filtered_df.empty:
@@ -226,9 +224,7 @@ def display_result(question, answer):
 
             if removed:
                 removed_str = ", ".join(list(removed))
-                st.markdown(
-                    f"The query returned these empty columns:  \n{removed_str}."
-                )
+                st.info(removed_str, title="Empty Columns")
 
         # if question in topology_questions:
         #     _, col, _ = st.columns([1, 2, 1])
