@@ -10,7 +10,7 @@ To learn more about Bat-Q and how to use it, please watch these [YouTube tutoria
 
 Version v0.2 introduces key architectural updates, interactive visualization, improved snapshot management, and enhanced user feedback:
 
-- Imporved navigation
+- Improved navigation
 - Interactive topology visualization
 - Enhanced snapshot management
 - DataFrame & schema optimization
