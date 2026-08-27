@@ -32,6 +32,7 @@ def init_session_state():
         "qlist": {},
         "cats": {},
         "cats_expander": [],
+        "report_analysis_data": [],
         "last_uploaded_file": None,
     }
     for key, value in defaults.items():

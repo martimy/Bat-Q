@@ -31,13 +31,16 @@ st.set_page_config(
 # Modern multi-page routing via st.navigation
 pages = {
     "Network Setup": [
-        st.Page("views/home.py", title="Snapshots & Setup", default=True),
+        st.Page("views/net_setup.py", title="Snapshots & Setup", default=True),
         st.Page("views/questions.py", title="Questions"),
     ],
     "Analysis & Verification": [
         st.Page("views/analysis.py", title="Network Analysis"),
         st.Page("views/fail_tests.py", title="Failure Tests"),
         st.Page("views/differential.py", title="Differential Analysis"),
+    ],
+    "Reporting": [
+        st.Page("views/reporting.py", title="Analysis Reporting"),
     ],
 }
 
