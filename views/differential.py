@@ -37,36 +37,30 @@ if (
     and "name" in st.session_state.altsnap
     and st.session_state.activesnap["name"] != st.session_state.altsnap["name"]
 ):
-    st.subheader(f"Reference snapshot: {st.session_state.activesnap['name']}")
-    st.subheader(f"Alternate snapshot: {st.session_state.altsnap['name']}")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader(f"Reference snapshot: {st.session_state.activesnap['name']}")
+    with col2:
+        st.subheader(f"Alternate snapshot: {st.session_state.altsnap['name']}")
 
     # Run selected questions
     if qlist:
         qs = convert_template(qlist)
-        q_names = [q["name"] for q in qs]
-        tabs = st.tabs(q_names)
-        for idx, tab in enumerate(tabs):
-            with tab:
-                with st.status(
-                    f"Running '{qs[idx]['name']}'...", expanded=False
-                ) as status:
-                    answer = run_query(
-                        qs[idx],
-                        (
-                            st.session_state.activesnap["name"],
-                            st.session_state.altsnap["name"],
-                        ),
-                    )
-                    if answer is None:
-                        status.update(
-                            label=f"'{qs[idx]['name']}' failed", state="error"
-                        )
-                    else:
-                        status.update(
-                            label=f"'{qs[idx]['name']}' complete", state="complete"
-                        )
-
-                display_result_diff(qs[idx]["fun"], answer)
+        for q in qs:
+            qn = q["name"]
+            with st.status(f"Running '{qn}'...", expanded=False) as status:
+                answer = run_query(
+                    q,
+                    (
+                        st.session_state.activesnap["name"],
+                        st.session_state.altsnap["name"],
+                    ),
+                )
+                if answer is None:
+                    status.update(label=f"'{qn}' failed", state="error")
+                else:
+                    status.update(label=f"'{qn}' complete", state="complete")
+                display_result_diff(q["fun"], answer)
 
     else:
         st.warning("Select some questions to proceed.")

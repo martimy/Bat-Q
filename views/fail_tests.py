@@ -72,33 +72,17 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
 
             # Create a new snapshot by forking the active snapshot
             if failed_nodes or failed_interfaces:
-                with st.status(
-                    "Forking snapshot with failures...", expanded=False
-                ) as status:
-                    fork_snapshot(active_snapshot, failed_nodes, failed_interfaces)
-                    status.update(label="Snapshot forked", state="complete")
-
-                # Run selected questions
+                fork_snapshot(active_snapshot, failed_nodes, failed_interfaces)
                 qs = convert_template(qlist)
-                q_names = [q["name"] for q in qs]
-                tabs = st.tabs(q_names)
-                for idx, tab in enumerate(tabs):
-                    with tab:
-                        with st.status(
-                            f"Running '{qs[idx]['name']}'...", expanded=False
-                        ) as status:
-                            answer = run_query(qs[idx])
-                            if answer is None:
-                                status.update(
-                                    label=f"'{qs[idx]['name']}' failed", state="error"
-                                )
-                            else:
-                                status.update(
-                                    label=f"'{qs[idx]['name']}' complete",
-                                    state="complete",
-                                )
-
-                        display_result(qs[idx]["fun"], answer)
+                for q in qs:
+                    qn = q["name"]
+                    with st.status(f"Running '{qn}'...", expanded=False) as status:
+                        answer = run_query(q)
+                        if answer is None:
+                            status.update(label=f"'{qn}' failed", state="error")
+                        else:
+                            status.update(label=f"'{qn}' complete", state="complete")
+                        display_result(q["fun"], answer)
 
         except Exception as e:
             st.error(f"Error encountered in one of the questions: {e}")
