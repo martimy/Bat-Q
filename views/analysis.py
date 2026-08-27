@@ -19,6 +19,7 @@ import streamlit as st
 from common.queries import run_query, set_snapshot
 from common.presenter import display_result, display_options
 from common.utils import convert_template, init_session_state
+from common.spreadsheet import build_report_xlsx
 import logging
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
@@ -48,9 +49,24 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
                 else:
                     status.update(label=f"'{qn}' complete", state="complete")
                 display_result(q["fun"], answer)
+                st.session_state["report_analysis_data"].append({"name": qn, "fun": q["fun"], "options": q.get("options"), "answer": answer})
 
     else:
         st.warning("Select some questions to proceed.")
+
+    with st.sidebar:
+        snapshot_name = st.session_state.activesnap["name"]
+        data = st.session_state.get("report_analysis_data")
+        xlsx_bytes = build_report_xlsx(data)
+        if xlsx_bytes:
+            st.download_button(
+                "Download Spreadsheet (.xlsx)",
+                data=xlsx_bytes,
+                file_name=f"batq_report_{snapshot_name}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        else:
+            st.info("No data available to export.")
 
 else:
     st.warning("Please add a snapshot on the Home page to continue.")
