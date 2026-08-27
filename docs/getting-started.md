@@ -23,7 +23,7 @@ Bat-Q requires that this folder structure is uploaded as a `.zip` file.
 
 At the Home page, you can upload the your network configuration files as `.zip` file. You can upload multiple configuration files. Batfish treats these files as network snapshots. The snapshots can be of the same network at different states or of different networks. Make sure you select one snapshot to be the active snapshot. You may also select another snapshot for comparisons.
 
-![Home Page](pics/home_page.png)
+![Home Page](pics/batq-setup.png)
 
 ## Questions page
 
@@ -31,13 +31,13 @@ The Questions page displays (almost) all of the Batfish questions grouped in cat
 
 Use the side bar to save the selected questions (in the Downloads folder, by default). You can also upload previously saved questions from YAML file.
 
-![Questions Page](pics/questions_page.png)
+![Questions Page](pics/batq-questions.png)
 
 ## Analysis page
 
 The Analysis pages shows the answers to the selected questions. Most answers are shown in table format. Bat-Q tries to remove all empty table columns. These removed columns are listed below the table. Topology questions include also a simple diagram of the topology.
 
-![Analysis Page](pics/analysis_page.png)
+![Analysis Page](pics/batq-analysis.png)
 
 ## Failure Tests page
 
@@ -45,7 +45,7 @@ Batfish allows you to test various network failure scenarios by disabling any nu
 
 Once the failed components are selected, answers to the selected questions will reflect the new state of the network. You can move back-and-forth between the Analysis page and the Failure Tests pages, or even add/delete/modify questions using the Questions pages, as many times as you wish.
 
-![Failure Test Page](pics/failure_page.png)
+![Failure Test Page](pics/batq-failure.png)
 
 ## Differential page
 
@@ -53,7 +53,7 @@ You can compare two snapshots by selecting them from the Home page. The Differen
 
 Note that most Batfish questions can be used for single or two snapshots. There are only two questions that can be used for comparisons only.
 
-![Differential Page](pics/differ_page.png)
+![Differential Page](pics/batq-differential.png)
 
 ## Limitations
 
