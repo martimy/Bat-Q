@@ -10,12 +10,11 @@ To learn more about Bat-Q and how to use it, please watch these [YouTube tutoria
 
 Version v0.2 introduces key architectural updates, interactive visualization, improved snapshot management, and enhanced user feedback:
 
-- Modern Navigation Architecture: Refactored the application layout using Streamlit's `st.navigation` and `st.Page` routing, reorganizing pages into a clean `views/` directory (`views/home.py`, `views/questions.py`, `views/analysis.py`, `views/fail_tests.py`, and `views/differential.py`).
-- Interactive Topology Visualization: Upgraded network topology and routing graphs to use interactive Plotly figures (`plot_plotly`) replacing static Matplotlib graphs.
-- Enhanced Snapshot & Network Management: Added workspace management for named Batfish networks, interactive snapshot renaming/deletion via `st.data_editor`, and automatic unique snapshot naming during upload to prevent accidental overwrites.
-- DataFrame & Schema Optimization: Implemented automatic column type inference (`build_column_config`) and explicit object-to-string conversion for PyBatfish data structures to ensure seamless PyArrow serialization.
-- Execution Feedback & Fragment Isolation: Added live `st.status` expanders to monitor query execution progress, fragment-isolated parameter configuration (`@st.fragment`), and instant feedback using Streamlit toast notifications.
-
+- Imporved navigation
+- Interactive topology visualization
+- Enhanced snapshot management
+- DataFrame & schema optimization
+- Report and spreadsheet generation
 
 ## Requirements
 
