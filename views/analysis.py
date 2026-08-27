@@ -25,7 +25,7 @@ logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 init_session_state()
 
-st.header("Network Analysis")
+st.title("Network Analysis", text_alignment="center")
 
 # Get selected questions
 qlist = st.session_state.get("qlist")

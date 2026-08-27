@@ -37,7 +37,7 @@ pages = {
     "Analysis & Verification": [
         st.Page("views/analysis.py", title="Network Analysis"),
         st.Page("views/fail_tests.py", title="Failure Tests"),
-        st.Page("views/differential.py", title="Differential"),
+        st.Page("views/differential.py", title="Differential Analysis"),
     ],
 }
 

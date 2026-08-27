@@ -31,7 +31,7 @@ logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 init_session_state()
 
-st.header("Failure Tests")
+st.title("Failure Tests", text_alignment="center")
 
 # Get selected questions
 qlist = st.session_state.get("qlist")
@@ -51,24 +51,27 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
             nodes = get_node_properties()
             interfaces = get_interface_properties()
 
-            # Select a node and/or an interface to fail
-            failed_nodes = st.multiselect(
-                "Select failed nodes",
-                nodes,
-                key="failednodes",
-                default=st.session_state.activesnap.get("failednodes", []),
-                on_change=update_failed,
-                kwargs={"key": "failednodes"},
-            )
+            col1, col2 = st.columns(2)
+            with col1:
+                # Select a node and/or an interface to fail
+                failed_nodes = st.multiselect(
+                    "Select failed nodes",
+                    nodes,
+                    key="failednodes",
+                    default=st.session_state.activesnap.get("failednodes", []),
+                    on_change=update_failed,
+                    kwargs={"key": "failednodes"},
+                )
 
-            failed_interfaces = st.multiselect(
-                "Select failed interfaces",
-                interfaces,
-                key="failedinfs",
-                default=st.session_state.activesnap.get("failedinfs", []),
-                on_change=update_failed,
-                kwargs={"key": "failedinfs"},
-            )
+            with col2:
+                failed_interfaces = st.multiselect(
+                    "Select failed interfaces",
+                    interfaces,
+                    key="failedinfs",
+                    default=st.session_state.activesnap.get("failedinfs", []),
+                    on_change=update_failed,
+                    kwargs={"key": "failedinfs"},
+                )
 
             # Create a new snapshot by forking the active snapshot
             if failed_nodes or failed_interfaces:

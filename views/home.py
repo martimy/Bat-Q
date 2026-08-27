@@ -62,6 +62,10 @@ information. The files must be organized in a specific folder structure. In
 Bat-Q, the folders must be compressed in .zip file.
 """
 
+SNAPSHOT_SELECTION = r"""
+Select one main snapshot to perform analysis and an alternative snapshot to perform comparisons.
+"""
+
 NETWORK_HELP = r"""
 A Batfish network is a workspace that groups related snapshots together 
 (e.g. one network per site or per team). Changing the name switches to that 
@@ -162,7 +166,7 @@ def upload_snapshot(bf_session):
                         "failednodes": [],
                         "failedinfs": [],
                     }
-                    st.toast(f"Snapshot '{new_name}' uploaded successfully!", icon="✅")
+                    st.toast(f"Snapshot '{new_name}' uploaded successfully!", icon=":material/check:")
                     st.rerun()
                 except Exception as e:
                     st.error(f"File {uploaded_file.name} is not recognized! Error: {e}")
@@ -256,7 +260,7 @@ def render_snapshot_manager(bf_session):
             st.error(err)
 
         if renamed or deleted:
-            st.toast(f"Applied: {renamed} renamed, {deleted} deleted.", icon="✅")
+            st.toast(f"Applied: {renamed} renamed, {deleted} deleted.", icon=":material/check:")
             st.rerun()
 
     return bf_session.list_snapshots()
@@ -268,6 +272,7 @@ def find_index(lst, item):
     except ValueError:
         return 0
 
+st.title("Setup", text_alignment="center")
 
 # Page View Logic
 bf_host = os.getenv("BATFISH_SERVER") or "127.0.0.1"
@@ -299,7 +304,7 @@ if msg == "":
     snapshots = render_snapshot_manager(bf_session)
 
     if snapshots:
-        st.header("Select Snapshots", help=SNAPSHOT)
+        st.header("Select Snapshots", help=SNAPSHOT_SELECTION)
 
         idx = (
             find_index(snapshots, st.session_state.activesnap["name"])
@@ -330,7 +335,7 @@ if msg == "":
             index=idx2,
             help="This snapshot is used for comparsions.",
         )
-    else:
-        st.warning("Upload a network snapshot.")
+    # else:
+    #     st.warning("Upload a network snapshot.")
 else:
     st.error(msg)

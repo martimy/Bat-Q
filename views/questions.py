@@ -162,7 +162,7 @@ def render_question_config(question, data, input_fields):
                 st.rerun(scope="fragment")
 
 
-st.header("Questions", help=QUESTIONS_HELP)
+st.title("Questions", help=QUESTIONS_HELP, text_alignment="center")
 
 # Load questions schema
 bf_questions = read_questions()["Batfish"]
