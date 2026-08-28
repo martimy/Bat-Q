@@ -1,0 +1,21 @@
+services:
+  batfish:
+    image: batfish/allinone:latest
+    container_name: batfish
+    ports:
+      - "9996:9996"
+    volumes:
+      - batfish-data:/data
+
+  bat-q:
+    build: .
+    container_name: bat-q
+    ports:
+      - "8501:8501"
+    environment:
+      - BATFISH_SERVER=batfish
+    depends_on:
+      - batfish
+
+volumes:
+  batfish-data:
