@@ -1,0 +1,25 @@
+{
+  "name": "Bat-Q Demo",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [8501, 9997, 9996],
+  "portsAttributes": {
+    "8501": {
+      "label": "Bat-Q (Streamlit)",
+      "onAutoForward": "openBrowser"
+    },
+    "9997": {
+      "label": "Batfish RPC",
+      "onAutoForward": "silent"
+    },
+    "9996": {
+      "label": "Batfish work",
+      "onAutoForward": "silent"
+    }
+  },
+  "onCreateCommand": "docker pull batfish/allinone && docker run --name batfish -d --restart unless-stopped -v batfish-data:/data -p 9997:9997 -p 9996:9996 batfish/allinone",
+  "postCreateCommand": "pip3 install -r requirements.txt",
+  "postAttachCommand": "python3 -m streamlit run Home.py"
+}
