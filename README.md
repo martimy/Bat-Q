@@ -1,10 +1,17 @@
 # Bat-Q: A Streamlit App for Network Analysis with Batfish
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/martimy/Bat-Q?quickstart=1)
+
+
 Bat-Q is a [Streamlit](https://streamlit.io/) app that lets you run various network analysis queries using [Batfish](https://www.batfish.org/), an open source network configuration analysis tool. You can upload your network configuration files as snapshots and analyze different scenarios or states. You can also select from a wide range of Batfish [questions](https://www.google.com/search?q=https://pybatfish.readthedocs.io/en/latest/index.html) to get insights into your network's behavior and security. Bat-Q displays the answers in tables and diagrams for easy interpretation.
 
 Bat-Q is designed to be simple, interactive, and flexible. You can use it for quick network configuration checks or for network troubleshooting and optimization tasks. Bat-Q is not a replacement for [pyBatfish](https://github.com/batfish/pybatfish), the Python API for Batfish, but rather a complementary tool that can help you get started with network analysis using Batfish.
 
 To learn more about Bat-Q and how to use it, please watch these [YouTube tutorials](https://www.google.com/search?q=https://www.youtube.com/playlist%3Flist%3DPLcWqK41-5YzIpiT223KToro0iaTww-58t) (work in progress).
+
+## Try it instantly
+
+No installation needed! Click the badge above to launch Bat-Q in a ready-to-use GitHub Codespace. Batfish and Streamlit start automatically; once the Codespace is ready, a browser tab will open with the app running.
 
 ## Release Notes - Version v0.2
 
