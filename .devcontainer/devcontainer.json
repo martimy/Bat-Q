@@ -2,7 +2,7 @@
   "name": "Bat-Q Demo",
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
   },
   "forwardPorts": [8501, 9997, 9996],
   "portsAttributes": {
