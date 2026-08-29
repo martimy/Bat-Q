@@ -1,24 +1,39 @@
 {
   "name": "Bat-Q Demo",
-  "image": "mcr.microsoft.com/devcontainers/python:3.11",
-  "features": {
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ]
+    }
   },
-  "forwardPorts": [8501, 9997, 9996],
+
+  // Install dependencies after the container is created
+  "postCreateCommand": "pip3 install --upgrade pip && pip3 install -r requirements.txt",
+
+  // Automatically start the Streamlit app when the container opens
+  "postAttachCommand": "python3 -m streamlit run Home.py --server.headless true",
+
+  // Forward and label ports for VS Code / GitHub Codespaces
   "portsAttributes": {
     "8501": {
-      "label": "Bat-Q (Streamlit)",
+      "label": "Streamlit App",
       "onAutoForward": "openBrowser"
     },
     "9997": {
-      "label": "Batfish RPC",
-      "onAutoForward": "silent"
+      "label": "Batfish Main Port",
+      "onAutoForward": "ignore"
     },
     "9996": {
-      "label": "Batfish work",
-      "onAutoForward": "silent"
+      "label": "Batfish Additional Port",
+      "onAutoForward": "ignore"
     }
   },
-  "postCreateCommand": "docker pull batfish/allinone && docker run --name batfish -d --restart unless-stopped -v batfish-data:/data -p 9997:9997 -p 9996:9996 batfish/allinone && pip3 install -r requirements.txt",
-  "postStartCommand": "nohup python3 -m streamlit run Home.py --server.port=8501 > /tmp/streamlit.log 2>&1 &"
+
+  "remoteUser": "vscode"
 }
