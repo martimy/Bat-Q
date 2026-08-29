@@ -1,0 +1,23 @@
+services:
+  # The main development container (where your code & terminal live)
+  app:
+    image: mcr.microsoft.com/devcontainers/python:3.11
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    network_mode: service:batfish  # Shares network namespace so localhost points directly to Batfish
+
+  # The Batfish service container
+  batfish:
+    image: batfish/allinone
+    container_name: batfish
+    restart: unless-stopped
+    volumes:
+      - batfish-data:/data
+    ports:
+      - "9997:9997"
+      - "9996:9996"
+      - "8501:8501"  # Streamlit default port
+
+volumes:
+  batfish-data:
