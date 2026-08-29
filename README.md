@@ -11,7 +11,7 @@ To learn more about Bat-Q and how to use it, please watch these [YouTube tutoria
 
 ## Try it instantly
 
-No installation needed! Click the badge above to launch Bat-Q in a ready-to-use GitHub Codespace. Batfish and Streamlit start automatically; once the Codespace is ready, a browser tab will open with the app running.
+No installation needed! Click the badge above to launch Bat-Q in a ready-to-use GitHub Codespace. Batfish and Streamlit start automatically; once the Codespace is ready, a browser tab will open with the app running. Use the `abc_net.zip` example provided to try out Bat-Q.
 
 ## Release Notes - Version v0.2
 
