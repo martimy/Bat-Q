@@ -16,6 +16,7 @@ limitations under the License.
 """
 
 import ast
+import hashlib
 import yaml
 import streamlit as st
 from common.bfqs import read_questions
@@ -207,16 +208,28 @@ with st.sidebar:
         "Upload Questions", type="yaml", help="Load saved questions from a YAML file."
     )
 
-if saved_questions:
-    try:
-        loaded = yaml.safe_load(saved_questions)
-        if "questions" in loaded:
-            st.session_state.qlist = sort_qlist_by_schema(loaded["questions"], bf_questions)
-            st.session_state.cats = get_cat_quest_dict(st.session_state.qlist)
-            st.toast("Questions loaded from file!", icon=":material/folder:")
-    except Exception as e:
-        with st.sidebar:
-            st.error(f"Error loading questions: {e}")
+if saved_questions is not None:
+    file_id = hashlib.md5(saved_questions.getvalue()).hexdigest()
+    saved_questions.seek(0)
+    if st.session_state.get("last_uploaded_questions_file") != file_id:
+        try:
+            loaded = yaml.safe_load(saved_questions)
+            if "questions" in loaded:
+                st.session_state.qlist = sort_qlist_by_schema(
+                    loaded["questions"], bf_questions
+                )
+                st.session_state.cats = get_cat_quest_dict(st.session_state.qlist)
+                # Synchronize all checkbox widget states in session_state
+                for q_name in quest_dict:
+                    st.session_state[q_name] = q_name in st.session_state.qlist
+                st.session_state["last_uploaded_questions_file"] = file_id
+                st.toast("Questions loaded from file!", icon=":material/folder:")
+                st.rerun()
+        except Exception as e:
+            with st.sidebar:
+                st.error(f"Error loading questions: {e}")
+else:
+    st.session_state["last_uploaded_questions_file"] = None
 
 
 st.markdown(QUESTIONS_CATEGORIES)

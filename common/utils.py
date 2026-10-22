@@ -34,6 +34,7 @@ def init_session_state():
         "cats_expander": [],
         "report_analysis_data": [],
         "last_uploaded_file": None,
+        "last_uploaded_questions_file": None,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
