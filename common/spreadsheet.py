@@ -2,9 +2,15 @@
 import io
 import re
 import pandas as pd
-from .presenter import json_to_dataframe, flatten_trace_data, select_questions, format_result, format_result_lite
+from .presenter import (
+    json_to_dataframe,
+    flatten_trace_data,
+    select_questions,
+    format_result,
+    format_result_lite,
+)
 
-INVALID_SHEET_CHARS = r'[]:*?/\\'
+INVALID_SHEET_CHARS = r"[]:*?/\\"
 
 
 def _safe_sheet_name(name, used):
@@ -73,7 +79,12 @@ def build_report_xlsx(sections):
     wrote_any = False
 
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        seen = set()
         for item in sections:
+            key = (item.get("name"), str(item.get("options")))
+            if key in seen:
+                continue
+            seen.add(key)
             df = question_to_dataframe(item["fun"], item["answer"])
             if df is None or df.empty:
                 continue

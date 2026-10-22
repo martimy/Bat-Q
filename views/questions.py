@@ -19,7 +19,7 @@ import ast
 import yaml
 import streamlit as st
 from common.bfqs import read_questions
-from common.utils import init_session_state
+from common.utils import init_session_state, sort_qlist_by_schema
 
 QUESTIONS_HELP = """
 For more details on parameter syntax, see the [Batfish Documentation](https://batfish.readthedocs.io/).
@@ -73,6 +73,7 @@ def update_selected_questions(q_name):
             "category": quest_dict[q_name]["category"],
             "fun": quest_dict[q_name]["fun"],
         }
+    st.session_state.qlist = sort_qlist_by_schema(st.session_state.qlist, bf_questions)
 
 
 def update_expanded_cats(cat_name):
@@ -181,14 +182,23 @@ with right:
 
 
 cats_expander = st.session_state.get("cats_expander", {})
-qlist = st.session_state.get("qlist", {})
-new_qlist = {}
+qlist = sort_qlist_by_schema(st.session_state.get("qlist", {}), bf_questions)
+st.session_state.qlist = qlist
 
 
 with st.sidebar:
+    st.markdown("*Scorll down to load or save selected questions*")
     st.subheader("Selected Questions")
     if qlist:
-        st.markdown("- " + "\n- ".join(qlist.keys()))
+        sidebar_text = []
+        current_cat = None
+        for q_name, q_val in qlist.items():
+            cat = q_val.get("category") or quest_dict.get(q_name, {}).get("category")
+            if cat and cat != current_cat:
+                current_cat = cat
+                sidebar_text.append(f"- **{cat}**")
+            sidebar_text.append(f"\t- {q_name}")
+        st.markdown("\n".join(sidebar_text))
     else:
         st.markdown("No questions selected yet.")
 
@@ -201,8 +211,8 @@ if saved_questions:
     try:
         loaded = yaml.safe_load(saved_questions)
         if "questions" in loaded:
-            st.session_state.qlist = loaded["questions"]
-            st.session_state.cats = get_cat_quest_dict(loaded["questions"])
+            st.session_state.qlist = sort_qlist_by_schema(loaded["questions"], bf_questions)
+            st.session_state.cats = get_cat_quest_dict(st.session_state.qlist)
             st.toast("Questions loaded from file!", icon=":material/folder:")
     except Exception as e:
         with st.sidebar:

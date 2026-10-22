@@ -137,8 +137,10 @@ def dict_to_str(data: dict):
 def display_options(d):
     st.markdown(f"**Options:**  \n{dict_to_str(d)}")
 
+
 def display_removed(d):
     st.markdown(f"**Empty Columns:**  \n{d}")
+
 
 def json_to_dataframe(trace):
     traces_table = pd.DataFrame(columns=["Node", "Type", "Action", "Detail"])

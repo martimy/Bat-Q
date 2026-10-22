@@ -166,7 +166,10 @@ def upload_snapshot(bf_session):
                         "failednodes": [],
                         "failedinfs": [],
                     }
-                    st.toast(f"Snapshot '{new_name}' uploaded successfully!", icon=":material/check:")
+                    st.toast(
+                        f"Snapshot '{new_name}' uploaded successfully!",
+                        icon=":material/check:",
+                    )
                     st.rerun()
                 except Exception as e:
                     st.error(f"File {uploaded_file.name} is not recognized! Error: {e}")
@@ -175,6 +178,7 @@ def upload_snapshot(bf_session):
 def clear_snapshot_refs(name):
     if st.session_state.activesnap.get("name") == name:
         st.session_state.activesnap = {}
+        st.session_state["report_analysis_data"] = []
     if st.session_state.altsnap.get("name") == name:
         st.session_state.altsnap = {}
 
@@ -260,7 +264,10 @@ def render_snapshot_manager(bf_session):
             st.error(err)
 
         if renamed or deleted:
-            st.toast(f"Applied: {renamed} renamed, {deleted} deleted.", icon=":material/check:")
+            st.toast(
+                f"Applied: {renamed} renamed, {deleted} deleted.",
+                icon=":material/check:",
+            )
             st.rerun()
 
     return bf_session.list_snapshots()
@@ -271,6 +278,7 @@ def find_index(lst, item):
         return lst.index(item)
     except ValueError:
         return 0
+
 
 st.title("Setup", text_alignment="center")
 
@@ -322,6 +330,7 @@ if msg == "":
                 "failednodes": [],
                 "failedinfs": [],
             }
+            st.session_state["report_analysis_data"] = []
 
         idx2 = (
             find_index(snapshots, st.session_state.altsnap["name"])

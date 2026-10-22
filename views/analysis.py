@@ -38,6 +38,7 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
     # Run selected questions
     if qlist:
         qs = convert_template(qlist)
+        results = []
         for q in qs:
             qn = q["name"]
             with st.status(f"Running '{qn}'...", expanded=False) as status:
@@ -49,7 +50,15 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
                 else:
                     status.update(label=f"'{qn}' complete", state="complete")
                 display_result(q["fun"], answer)
-                st.session_state["report_analysis_data"].append({"name": qn, "fun": q["fun"], "options": q.get("options"), "answer": answer})
+                results.append(
+                    {
+                        "name": qn,
+                        "fun": q["fun"],
+                        "options": q.get("options"),
+                        "answer": answer,
+                    }
+                )
+        st.session_state["report_analysis_data"] = results
 
     else:
         st.warning("Select some questions to proceed.")
