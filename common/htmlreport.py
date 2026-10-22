@@ -107,7 +107,12 @@ def render_result_html(question, answer):
 def build_report_html(sections, snapshot_name, generated_at):
     """sections: list of {"name": str, "options": dict|None, "html": str}"""
     section_html = []
+    seen = set()
     for s in sections:
+        key = (s.get("name"), str(s.get("options")))
+        if key in seen:
+            continue
+        seen.add(key)
         opts = ""
         if s.get("options"):
             opts = f"<p class='bq-note'><strong>Options:</strong> {html.escape(dict_to_str(s['options']))}</p>"

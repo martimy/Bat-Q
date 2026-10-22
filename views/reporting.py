@@ -13,13 +13,22 @@ if not data:
     st.warning("Run some questions on the Analysis page first.")
 else:
     sections = [
-        {"name": item["name"], "options": item.get("options"),
-         "html": render_result_html(item["fun"], item["answer"])}
+        {
+            "name": item["name"],
+            "options": item.get("options"),
+            "html": render_result_html(item["fun"], item["answer"]),
+        }
         for item in data
     ]
-    report = build_report_html(sections, snapshot_name, datetime.now().strftime("%Y-%m-%d %H:%M"))
+    report = build_report_html(
+        sections, snapshot_name, datetime.now().strftime("%Y-%m-%d %H:%M")
+    )
 
     with st.sidebar:
-        st.download_button("Download HTML Report", data=report,
-                            file_name=f"batq_report_{snapshot_name}.html", mime="text/html")
+        st.download_button(
+            "Download HTML Report",
+            data=report,
+            file_name=f"batq_report_{snapshot_name}.html",
+            mime="text/html",
+        )
     st.iframe(report, height=600)

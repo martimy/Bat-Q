@@ -75,13 +75,41 @@ def get_next_item(input_item, item_list):
         return f"{input_item}_1"
 
 
+def sort_qlist_by_schema(qlist, questions_data=None):
+    """
+    Sorts a qlist dictionary according to the order of categories and questions
+    as they appear in the Batfish questions schema.
+    """
+    if not qlist:
+        return {}
+
+    if questions_data is None:
+        try:
+            from common.bfqs import read_questions
+            questions_data = read_questions()["Batfish"]
+        except Exception:
+            return qlist
+
+    order = {}
+    idx = 0
+    for cat in questions_data:
+        for q in cat.get("questions", []):
+            name = q.get("name")
+            if name and name not in order:
+                order[name] = idx
+                idx += 1
+
+    return dict(sorted(qlist.items(), key=lambda item: order.get(item[0], 9999)))
+
+
 def convert_template(input_data):
     """
     Returns a list of option sets for a question
     """
     output = []
+    sorted_data = sort_qlist_by_schema(input_data)
 
-    for question_name, question_data in input_data.items():
+    for question_name, question_data in sorted_data.items():
         fun = question_data.get("fun", "")
         variants = question_data.get("variants", [])
 
