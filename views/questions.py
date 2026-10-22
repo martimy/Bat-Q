@@ -17,6 +17,7 @@ limitations under the License.
 
 import ast
 import hashlib
+import json
 import yaml
 import streamlit as st
 from common.bfqs import read_questions
@@ -29,7 +30,7 @@ QUESTIONS_INPUT = """
 Enter question parameters below.
 """
 QUESTIONS_CATEGORIES = """
-Select questions from one of more categories below.
+Select questions from one of more categories below (* indicates category has questions with required parameters).
 """
 
 init_session_state()
@@ -87,6 +88,54 @@ def update_expanded_cats(cat_name):
     st.session_state["cats_expander"] = states
 
 
+TYPE_HINTS = {
+    "HeaderConstraints": {
+        "hint": "Dictionary / JSON object of packet header constraints.",
+        "placeholder": "{'dstIps': '8.8.8.8', 'srcIps': '10.0.0.1'}",
+        "example": "{'dstIps': '8.8.8.8', 'applications': ['HTTP']}",
+        "fields": "srcIps, dstIps, srcPorts, dstPorts, ipProtocols, applications, icmpCodes, icmpTypes, tcpFlags",
+    },
+    "PathConstraints": {
+        "hint": "Dictionary / JSON object of path routing constraints.",
+        "placeholder": "{'startLocation': 'node1', 'endLocation': 'node2'}",
+        "example": "{'startLocation': 'as1border1', 'endLocation': 'as2border1'}",
+        "fields": "startLocation, endLocation, transitLocations, forbiddenLocations",
+    },
+    "BgpRoute": {
+        "hint": "Dictionary or list of dictionaries defining BGP route attributes.",
+        "placeholder": "[{'network': '10.0.0.0/24', 'originatorIp': '1.1.1.1', 'originType': 'egp', 'protocol': 'bgp'}]",
+        "example": "[{'network': '10.0.0.0/24', 'originatorIp': '1.1.1.1', 'originType': 'egp', 'protocol': 'bgp'}]",
+        "fields": "network, originatorIp, originType, protocol, asPath, communities, localPreference, metric",
+    },
+    "BgpSessionProperties": {
+        "hint": "Dictionary defining BGP session properties.",
+        "placeholder": "{'localAs': 65001, 'remoteAs': 65002, 'localIp': '1.1.1.1', 'remoteIp': '1.1.1.2'}",
+        "example": "{'localAs': 65001, 'remoteAs': 65002, 'localIp': '1.1.1.1', 'remoteIp': '1.1.1.2'}",
+        "fields": "localAs, remoteAs, localIp, remoteIp",
+    },
+    "NodeSpec": {
+        "hint": "Batfish Node specifier pattern (node name, regex '/pattern/', or comma-separated).",
+        "placeholder": "as1.* or node1,node2",
+        "example": "as1.*",
+    },
+    "IpSpec": {
+        "hint": "Batfish IP specifier (IP address or CIDR subnet prefix).",
+        "placeholder": "10.0.0.1 or 10.0.0.0/24",
+        "example": "10.0.0.0/24",
+    },
+    "RoutingPolicySpec": {
+        "hint": "Routing policy name or regex pattern.",
+        "placeholder": "policy_name or /regex/",
+        "example": "my_policy",
+    },
+    "bool": {
+        "hint": "Boolean flag: True or False.",
+        "placeholder": "True / False",
+        "example": "True",
+    },
+}
+
+
 def generate_input_fields(inputs, question_name, variant_idx=0, defaults=None):
     """
     Renders input fields for a question variant and returns the dictionary of values.
@@ -98,24 +147,48 @@ def generate_input_fields(inputs, question_name, variant_idx=0, defaults=None):
         name = input_data["name"]
         is_optional = input_data.get("optional", True)
         param_type = input_data.get("type", "str")
-        label = f"{name} *" if not is_optional else f"{name} ({param_type})"
+
+        req_mark = " *" if not is_optional else ""
+        label = f"{name}{req_mark} ({param_type})"
+
+        type_info = TYPE_HINTS.get(param_type, {})
+        placeholder = type_info.get("placeholder", "")
+
+        help_parts = [
+            f"**Type:** `{param_type}`",
+            f"**Required:** {'Yes' if not is_optional else 'No'}",
+        ]
+        if type_info.get("hint"):
+            help_parts.append(type_info["hint"])
+        if type_info.get("fields"):
+            help_parts.append(f"**Supported keys:** `{type_info['fields']}`")
+        if type_info.get("example"):
+            help_parts.append(f"**Example:** `{type_info['example']}`")
+        help_text = "\n\n".join(help_parts)
+
         current_val = str(defaults.get(name, "")) if name in defaults else ""
 
         param_val = st.text_input(
             label,
             value=current_val,
+            placeholder=placeholder,
             key=f"{question_name}_{variant_idx}_{name}",
-            help=f"Type: {param_type}, Optional: {is_optional}",
+            help=help_text,
         )
 
         if param_val.strip():
+            val = None
             if input_data.get("type"):
                 try:
-                    input_values[name] = ast.literal_eval(param_val)
+                    val = ast.literal_eval(param_val)
                 except Exception:
-                    input_values[name] = param_val
+                    try:
+                        val = json.loads(param_val)
+                    except Exception:
+                        val = param_val
             else:
-                input_values[name] = param_val
+                val = param_val
+            input_values[name] = val
 
     return input_values
 
@@ -129,9 +202,13 @@ def render_question_config(question, data, input_fields):
     """
     variants_preview = data.get("variants", [{}])
     has_values = any(variant_opts for variant_opts in variants_preview)
+    has_required = any(
+        isinstance(f, dict) and not f.get("optional", True) for f in input_fields
+    )
+    popover_label = f"{question} *" if has_required else question
 
     with st.popover(
-        question,
+        popover_label,
         use_container_width=True,
         icon=":material/check:" if has_values else None,
     ):
@@ -142,7 +219,11 @@ def render_question_config(question, data, input_fields):
         variants = data.setdefault("variants", [{}])
 
         for idx, variant_opts in enumerate(variants):
-            variant_title = f"Variant #{idx + 1}" if len(variants) > 1 else "Parameters"
+            variant_title = (
+                f"Variant #{idx + 1}" if len(variants) > 1 else "Parameters"
+            )
+            # if has_required:
+            #     variant_title += " *"
             with st.expander(variant_title, expanded=True):
                 updated_values = generate_input_fields(
                     input_fields, question, variant_idx=idx, defaults=variant_opts
@@ -171,15 +252,22 @@ bf_questions = read_questions()["Batfish"]
 quest_dict = get_questions_dict(bf_questions)
 
 
-left, right = st.columns(2, gap="xxsmall", width=260)
-with left:
+col_exp, col_col, col_desel = st.columns(3, gap="xxsmall", width=390)
+with col_exp:
     if st.button(label="Expand All", icon=":material/expand_all:", width=120):
         st.session_state["cats_expander"] = [
             selected_category.get("category") for selected_category in bf_questions
         ]
-with right:
+with col_col:
     if st.button(label="Collapse All", icon=":material/collapse_all:", width=120):
         st.session_state["cats_expander"] = []
+with col_desel:
+    if st.button(label="Deselect All", icon=":material/deselect:", width=130):
+        st.session_state.qlist = {}
+        st.session_state.cats = {}
+        for q_name in quest_dict:
+            st.session_state[q_name] = False
+        st.rerun()
 
 
 cats_expander = st.session_state.get("cats_expander", {})
@@ -237,6 +325,12 @@ st.markdown(QUESTIONS_CATEGORIES)
 for selected_category in bf_questions:
     category_name = selected_category.get("category")
     if category_name:
+        # has_required = any(
+        #     isinstance(inp, dict) and not inp.get("optional", True)
+        #     for q in selected_category.get("questions", [])
+        #     for inp in q.get("input", [])
+        # )
+        # cat_label = f"{category_name} *" if has_required else category_name
         with st.expander(
             category_name,
             key=category_name,
@@ -254,8 +348,14 @@ for selected_category in bf_questions:
 
             with select_col:
                 for question_name in questions_list:
+                    fields = quest_dict.get(question_name, {}).get("input", [])
+                    has_req = any(
+                        isinstance(f, dict) and not f.get("optional", True)
+                        for f in fields
+                    ) if fields else False
+                    cb_label = f"{question_name} *" if has_req else question_name
                     st.checkbox(
-                        question_name,
+                        cb_label,
                         value=question_name in qlist,
                         on_change=update_selected_questions,
                         args=(question_name,),
