@@ -46,9 +46,6 @@ from common.utils import init_session_state
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
-# Assertions with a "phase" above this are not offered yet.
-MAX_PHASE = 1
-
 STATUS_ICON = {PASS: "✅", FAIL: "❌", ERROR: "⚠️", None: "⏺️"}
 STATUS_TEXT = {PASS: "Passed", FAIL: "Failed", ERROR: "Error", None: "Not run"}
 MAX_MESSAGE_CHARS = 5000
@@ -68,7 +65,7 @@ def _questions():
 
 
 def _assertion_types():
-    return [n for n, spec in ASSERTION_SPECS.items() if spec["phase"] <= MAX_PHASE]
+    return list(ASSERTION_SPECS)
 
 
 def _find(assertion_id):

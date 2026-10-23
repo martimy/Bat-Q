@@ -128,7 +128,7 @@ ASSERTION_SPECS = {
         "phase": 1,
         "source": "pybatfish",
         "call": SESSION,
-        "params": [{"name": "filters", "type": "str", "optional": False}],
+        "params": [{"name": "filters", "type": "FilterSpec", "optional": False}],
     },
     "assert_filter_permits": {
         "label": "Filter permits flows",
@@ -138,9 +138,9 @@ ASSERTION_SPECS = {
         "source": "pybatfish",
         "call": SESSION,
         "params": [
-            {"name": "filters", "type": "str", "optional": False},
+            {"name": "filters", "type": "FilterSpec", "optional": False},
             {"name": "headers", "type": "HeaderConstraints", "optional": False},
-            {"name": "startLocation", "type": "str", "optional": True},
+            {"name": "startLocation", "type": "LocationSpec", "optional": True},
         ],
     },
     "assert_filter_denies": {
@@ -151,9 +151,9 @@ ASSERTION_SPECS = {
         "source": "pybatfish",
         "call": SESSION,
         "params": [
-            {"name": "filters", "type": "str", "optional": False},
+            {"name": "filters", "type": "FilterSpec", "optional": False},
             {"name": "headers", "type": "HeaderConstraints", "optional": False},
-            {"name": "startLocation", "type": "str", "optional": True},
+            {"name": "startLocation", "type": "LocationSpec", "optional": True},
         ],
     },
     # ---- Reachability ---------------------------------------------------
@@ -165,7 +165,7 @@ ASSERTION_SPECS = {
         "source": "pybatfish",
         "call": SESSION,
         "params": [
-            {"name": "startLocation", "type": "str", "optional": False},
+            {"name": "startLocation", "type": "LocationSpec", "optional": False},
             {"name": "headers", "type": "HeaderConstraints", "optional": False},
         ],
     },
@@ -177,7 +177,7 @@ ASSERTION_SPECS = {
         "source": "pybatfish",
         "call": SESSION,
         "params": [
-            {"name": "startLocation", "type": "str", "optional": False},
+            {"name": "startLocation", "type": "LocationSpec", "optional": False},
             {"name": "headers", "type": "HeaderConstraints", "optional": False},
         ],
     },
@@ -226,7 +226,7 @@ ASSERTION_SPECS = {
         "answer_from": FROM_ROUTES,
         "answer_param": "routes",
         "params": [
-            {"name": "expected_route", "type": "dict", "optional": False},
+            {"name": "expected_route", "type": "RouteMatch", "optional": False},
             {"name": "node", "type": "str", "optional": False},
             {"name": "vrf", "type": "str", "optional": True},
         ],
@@ -241,7 +241,7 @@ ASSERTION_SPECS = {
         "answer_from": FROM_ROUTES,
         "answer_param": "routes",
         "params": [
-            {"name": "expected_route", "type": "dict", "optional": False},
+            {"name": "expected_route", "type": "RouteMatch", "optional": False},
             {"name": "node", "type": "str", "optional": False},
             {"name": "vrf", "type": "str", "optional": True},
         ],

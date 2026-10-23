@@ -55,7 +55,18 @@ _TYPE_CHECKS = {
     "list": (list,),
     "dict": (dict,),
     "HeaderConstraints": (dict,),
+    "RouteMatch": (dict,),
+    "LocationSpec": (str,),
+    "FilterSpec": (str,),
 }
+
+
+def _header_fields():
+    """Field names HeaderConstraints accepts (from the installed pybatfish)."""
+    import attr
+    from pybatfish.datamodel.flow import HeaderConstraints
+
+    return {f.name for f in attr.fields(HeaderConstraints)}
 
 
 def new_assertion_id(alist):
@@ -117,6 +128,20 @@ def validate_assertion(item, known_funs=None):
                 errors.append(
                     f"parameter {name} must be of type {p['type']} "
                     f"(got {type(value).__name__})"
+                )
+            elif p.get("type") == "HeaderConstraints":
+                allowed = _header_fields()
+                unknown_keys = sorted(set(value) - allowed)
+                if unknown_keys:
+                    errors.append(
+                        f"parameter {name}: unknown field(s) "
+                        f"{', '.join(map(str, unknown_keys))} "
+                        f"(allowed: {', '.join(sorted(allowed))})"
+                    )
+            elif p.get("type") == "RouteMatch" and not value:
+                errors.append(
+                    f"parameter {name} must not be empty "
+                    "(an empty match would accept any route)"
                 )
 
     # question
