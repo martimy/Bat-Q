@@ -40,7 +40,7 @@ Bat-Q is built with [Streamlit](https://streamlit.io/), a Python framework for
 creating data-driven web apps. You can find the source code of Bat-Q on 
 [GitHub](https://github.com/martimy/Bat-Q), 
 where you can also learn how to install and use the app. Bat-Q requires 
-Python 3.6+, as well as a Batfish Docker container that can be pulled from 
+Python 3.10+, as well as a Batfish Docker container that can be pulled from 
 Docker Hub.
 
 If you are interested in network analysis and want to try out Batfish, Bat-Q is 
