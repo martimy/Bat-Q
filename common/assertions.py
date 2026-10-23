@@ -187,6 +187,24 @@ def _fetch_answer(spec, item, params, snapshot):
     raise ValueError(f"Unsupported answer source: {spec['answer_from']!r}")
 
 
+def drop_snapshot_results(results, snapshot):
+    """Returns `results` without the entries recorded on `snapshot`."""
+    suffix = f"@{snapshot}"
+    return {k: v for k, v in results.items() if not k.endswith(suffix)}
+
+
+def rename_snapshot_results(results, old, new):
+    """Returns `results` with entries recorded on `old` re-keyed to `new`."""
+    out = {}
+    for key, value in results.items():
+        aid, _, snap = key.rpartition("@")
+        if snap == old:
+            key = result_key(aid, new)
+            value.snapshot = new
+        out[key] = value
+    return out
+
+
 def run_assertion_item(item, snapshot):
     """
     Runs one assertion from the assertion list (see common/assertion_io.py)

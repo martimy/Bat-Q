@@ -42,6 +42,7 @@ pages = {
     ],
     "Reporting": [
         st.Page("views/reporting.py", title="Analysis Reporting"),
+        st.Page("views/assertion_reporting.py", title="Assertion Reporting"),
     ],
 }
 
