@@ -17,6 +17,7 @@ limitations under the License.
 
 import inspect
 import time
+import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
@@ -25,9 +26,10 @@ from pandas import DataFrame
 from pybatfish.client import asserts as bf_asserts
 from pybatfish.client.session import Asserts
 from pybatfish.datamodel.answer import Answer, TableAnswer
-from pybatfish.exception import BatfishAssertException
+from pybatfish.datamodel.flow import HeaderConstraints
+from pybatfish.exception import BatfishAssertException, BatfishAssertWarning
 
-from common.assertion_specs import FROM_QUESTION, get_spec
+from common.assertion_specs import FROM_QUESTION, FROM_ROUTES, get_spec
 from common.queries import get_bf_session
 
 PASS = "pass"
@@ -106,6 +108,15 @@ def list_assertions():
     }
 
 
+def _prepare_params(params):
+    """Converts parameters from their file/form form to what pybatfish expects."""
+    params = dict(params)
+    if isinstance(params.get("headers"), dict):
+        # Also rejects unknown header fields with a clear TypeError.
+        params["headers"] = HeaderConstraints(**params["headers"])
+    return params
+
+
 def run_assertion(name: str, snapshot: Optional[str] = None, **params: Any):
     """
     Runs one pybatfish assertion and returns an AssertionResult.
@@ -120,21 +131,36 @@ def run_assertion(name: str, snapshot: Optional[str] = None, **params: Any):
     assertion raises BatfishAssertException, which is reported as FAIL. Any
     other exception (bad parameters, lost connection, ...) is reported as
     ERROR, so a broken run is never mistaken for a pass.
+
+    pybatfish also emits a BatfishAssertWarning when an assertion could not
+    really be evaluated (for example, assert_has_no_route "passes" when the
+    node or VRF does not exist). Such a run is reported as ERROR too.
     """
     start = time.perf_counter()
     try:
-        if name in CUSTOM:
-            CUSTOM[name](soft=False, **params)
-        elif name in ANSWER_BASED:
-            fun = getattr(bf_asserts, name)
-            fun(soft=False, **params)
+        params = _prepare_params(params)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            if name in CUSTOM:
+                CUSTOM[name](soft=False, **params)
+            elif name in ANSWER_BASED:
+                fun = getattr(bf_asserts, name)
+                fun(soft=False, **params)
+            else:
+                bf = get_bf_session()
+                fun = getattr(bf.asserts, name)
+                if snapshot is not None:
+                    params["snapshot"] = snapshot
+                fun(soft=False, **params)
+        notes = [
+            str(w.message)
+            for w in caught
+            if issubclass(w.category, BatfishAssertWarning)
+        ]
+        if notes:
+            status, message = ERROR, "Not evaluated: " + "; ".join(notes)
         else:
-            bf = get_bf_session()
-            fun = getattr(bf.asserts, name)
-            if snapshot is not None:
-                params["snapshot"] = snapshot
-            fun(soft=False, **params)
-        status, message = PASS, ""
+            status, message = PASS, ""
     except BatfishAssertException as e:
         status, message = FAIL, str(e)
     except Exception as e:
@@ -142,43 +168,55 @@ def run_assertion(name: str, snapshot: Optional[str] = None, **params: Any):
     return AssertionResult(status, message, time.perf_counter() - start)
 
 
+def _fetch_answer(spec, item, params, snapshot):
+    """
+    Runs the question an answer-based assertion needs.
+    Returns (question function name, answer). Raises on failure.
+    """
+    bf = get_bf_session()
+    if spec["answer_from"] == FROM_QUESTION:
+        question = item.get("question") or {}
+        fun = question["fun"]
+        options = question.get("options") or {}
+        return fun, getattr(bf.q, fun)(**options).answer(snapshot=snapshot)
+    if spec["answer_from"] == FROM_ROUTES:
+        # Only the routes of the node/VRF being checked are retrieved.
+        vrf = params.setdefault("vrf", "default")
+        answer = bf.q.routes(nodes=params["node"], vrfs=vrf).answer(snapshot=snapshot)
+        return "routes", answer.frame()
+    raise ValueError(f"Unsupported answer source: {spec['answer_from']!r}")
+
+
 def run_assertion_item(item, snapshot):
     """
     Runs one assertion from the assertion list (see common/assertion_io.py)
     on a snapshot and returns an AssertionResult.
 
-    For assertions that check a question's answer, the question is run first.
-    If that question fails, the result is ERROR (never PASS or FAIL), since
-    nothing was actually checked.
+    For assertions that check an answer (a chosen question, or the routes of
+    a node), the question is run first. If that fails, the result is ERROR
+    (never PASS or FAIL), since nothing was actually checked.
     """
     start = time.perf_counter()
     spec = get_spec(item.get("type"))
     params = dict(item.get("params") or {})
     fun = answer = None
+    result = None
 
     if spec is None:
         result = AssertionResult(ERROR, f"Unknown assertion type: {item.get('type')!r}")
-    elif spec["call"] == "answer" and spec.get("answer_from") != FROM_QUESTION:
-        result = AssertionResult(
-            ERROR, "This assertion type is not supported by this version of Bat-Q."
-        )
-    else:
-        result = None
-        if spec["call"] == "answer":
-            question = item.get("question") or {}
-            fun = question.get("fun")
-            try:
-                bf = get_bf_session()
-                options = question.get("options") or {}
-                answer = getattr(bf.q, fun)(**options).answer(snapshot=snapshot)
-            except Exception as e:
-                result = AssertionResult(
-                    ERROR, f"Question '{fun}' failed: {type(e).__name__}: {e}"
-                )
-            else:
-                params[spec["answer_param"]] = answer
-        if result is None:
-            result = run_assertion(item["type"], snapshot=snapshot, **params)
+    elif spec["call"] == "answer":
+        try:
+            fun, answer = _fetch_answer(spec, item, params, snapshot)
+        except Exception as e:
+            fun = fun or (item.get("question") or {}).get("fun") or "routes"
+            result = AssertionResult(
+                ERROR, f"Question '{fun}' failed: {type(e).__name__}: {e}"
+            )
+        else:
+            params[spec["answer_param"]] = answer
+
+    if result is None:
+        result = run_assertion(item["type"], snapshot=snapshot, **params)
 
     result.runtime = time.perf_counter() - start
     result.snapshot = snapshot

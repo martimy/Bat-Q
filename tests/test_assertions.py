@@ -8,6 +8,7 @@ import os
 import sys
 
 import pandas as pd
+from types import SimpleNamespace
 import pytest
 from pybatfish.client import asserts as bf_asserts
 from pybatfish.client.session import Asserts
@@ -75,8 +76,8 @@ def test_example_file_loads_cleanly():
     with open(EXAMPLE) as f:
         alist, errors = io.load_assertions(f.read())
     assert errors == []
-    assert len(alist) == 6
-    assert [a["id"] for a in alist] == [f"a{i}" for i in range(1, 7)]
+    assert len(alist) == 9
+    assert [a["id"] for a in alist] == [f"a{i}" for i in range(1, 10)]
 
 
 def test_round_trip_preserves_content():
@@ -167,3 +168,138 @@ def test_runner_statuses():
     assert A.run_assertion("batq_min_results", answer=df2, num=3).status == "fail"
     assert A.run_assertion("batq_min_results", answer=df2).status == "pass"
     assert A.run_assertion("batq_min_results", answer=pd.DataFrame()).status == "fail"
+
+
+# ------------------------------------------------------ Phase 2: validation
+@pytest.mark.parametrize(
+    "params, fragment",
+    [
+        ({"startLocation": "r1", "headers": {"dstIp": "1.1.1.1"}}, "unknown field"),
+        ({"startLocation": "r1", "headers": "dstIps=1.1.1.1"}, "must be of type"),
+        ({"headers": {"dstIps": "1.1.1.1"}}, "missing required parameter"),
+        ({"startLocation": 5, "headers": {}}, "must be of type"),
+    ],
+)
+def test_flow_params_are_validated(params, fragment):
+    errors = io.validate_assertion({"type": "assert_flows_succeed", "params": params})
+    assert any(fragment in e for e in errors), errors
+
+
+def test_valid_flow_and_route_params():
+    ok = {
+        "type": "assert_flows_fail",
+        "params": {
+            "startLocation": "r1",
+            "headers": {"dstIps": "1.1.1.1", "applications": ["SSH"]},
+        },
+    }
+    assert io.validate_assertion(ok) == []
+    route = {
+        "type": "assert_has_route",
+        "params": {"node": "r1", "expected_route": {"Network": "10.0.0.0/24"}},
+    }
+    assert io.validate_assertion(route) == []
+    route["params"]["expected_route"] = {}
+    assert any("must not be empty" in e for e in io.validate_assertion(route))
+
+
+# ---------------------------------------------------- Phase 2: runner logic
+def _runner():
+    pytest.importorskip("streamlit")
+    from common import assertions as A
+
+    return A
+
+
+ROUTES = pd.DataFrame(
+    [{"Node": "r1", "VRF": "default", "Network": "10.0.0.0/24", "Protocol": "bgp"}]
+)
+
+
+def test_route_assertions_on_a_frame():
+    A = _runner()
+    present = {"Network": "10.0.0.0/24"}
+    absent = {"Network": "1.1.1.0/24"}
+    run = A.run_assertion
+    assert (
+        run("assert_has_route", routes=ROUTES, expected_route=present, node="r1").status
+        == "pass"
+    )
+    assert (
+        run("assert_has_route", routes=ROUTES, expected_route=absent, node="r1").status
+        == "fail"
+    )
+    assert (
+        run(
+            "assert_has_no_route", routes=ROUTES, expected_route=absent, node="r1"
+        ).status
+        == "pass"
+    )
+    assert (
+        run(
+            "assert_has_no_route", routes=ROUTES, expected_route=present, node="r1"
+        ).status
+        == "fail"
+    )
+
+
+def test_has_no_route_on_missing_node_or_vrf_is_an_error_not_a_pass():
+    """pybatfish passes these with a warning; Bat-Q must not report a pass."""
+    A = _runner()
+    for kw in ({"node": "typo"}, {"node": "r1", "vrf": "typo"}):
+        r = A.run_assertion(
+            "assert_has_no_route",
+            routes=ROUTES,
+            expected_route={"Network": "10.0.0.0/24"},
+            **kw,
+        )
+        assert r.status == "error", kw
+        assert "Not evaluated" in r.message
+
+
+def test_headers_become_header_constraints_and_bad_fields_error(monkeypatch):
+    A = _runner()
+    from pybatfish.datamodel.flow import HeaderConstraints
+
+    seen = {}
+    monkeypatch.setattr(
+        A,
+        "get_bf_session",
+        lambda: SimpleNamespace(
+            asserts=SimpleNamespace(
+                assert_flows_succeed=lambda **kw: seen.update(kw) or True
+            )
+        ),
+    )
+    r = A.run_assertion(
+        "assert_flows_succeed",
+        snapshot="s1",
+        startLocation="r1",
+        headers={"dstIps": "10.0.0.1"},
+    )
+    assert r.status == "pass"
+    assert isinstance(seen["headers"], HeaderConstraints) and seen["snapshot"] == "s1"
+    r = A.run_assertion(
+        "assert_flows_succeed", startLocation="r1", headers={"dstIp": "1"}
+    )
+    assert r.status == "error" and "dstIp" in r.message
+
+
+def test_routes_question_failure_is_an_error(monkeypatch):
+    A = _runner()
+
+    class Boom:
+        def __call__(self, **kw):
+            raise RuntimeError("no connection")
+
+    monkeypatch.setattr(
+        A, "get_bf_session", lambda: SimpleNamespace(q=SimpleNamespace(routes=Boom()))
+    )
+    item = {
+        "type": "assert_has_no_route",
+        "params": {"node": "r1", "expected_route": {"Network": "10.0.0.0/24"}},
+    }
+    r = A.run_assertion_item(item, "s1")
+    assert (
+        r.status == "error" and "routes" in r.message and "no connection" in r.message
+    )

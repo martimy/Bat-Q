@@ -63,6 +63,26 @@ TYPE_HINTS = {
         "placeholder": "policy_name or /regex/",
         "example": "my_policy",
     },
+    "LocationSpec": {
+        "hint": "Batfish location specifier: where the flow starts (see the Batfish documentation).",
+        "placeholder": "node1",
+        "example": "as1border1",
+    },
+    "FilterSpec": {
+        "hint": "Batfish filter specifier: filter (ACL) name, /regex/, or comma-separated names.",
+        "placeholder": "acl_name or /regex/",
+        "example": "acl_in",
+    },
+    "RouteMatch": {
+        "hint": (
+            "Dictionary of columns of the Routes answer that the route must "
+            "match. Only the keys given are compared, and values must match "
+            "exactly."
+        ),
+        "placeholder": "{'Network': '10.0.0.0/24', 'Protocol': 'bgp'}",
+        "example": "{'Network': '10.0.0.0/24', 'Protocol': 'bgp'}",
+        "fields": "Network, Protocol, Next_Hop_IP, Next_Hop_Interface, Admin_Distance, Metric, Tag",
+    },
     "bool": {
         "hint": "Boolean flag: True or False.",
         "placeholder": "True / False",

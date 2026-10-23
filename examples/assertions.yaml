@@ -16,3 +16,22 @@ assertions:
       fun: bgpEdges
     params:
       num: 2
+  # The next three use device names from the abc_net example; adjust for your network.
+  - type: assert_flows_succeed
+    description: Web traffic from border1 reaches the server.
+    params:
+      startLocation: as1border1
+      headers:
+        dstIps: 10.0.0.1
+        applications: [HTTP]
+  - type: assert_filter_permits
+    params:
+      filters: acl_in
+      headers:
+        srcIps: 1.1.1.1
+  - type: assert_has_route
+    params:
+      node: as1border1
+      expected_route:
+        Network: 10.0.0.0/24
+        Protocol: bgp
