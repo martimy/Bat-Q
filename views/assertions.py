@@ -20,7 +20,12 @@ import logging
 import pandas as pd
 import streamlit as st
 
-from common.assertion_io import new_assertion_id, validate_assertion
+from common.assertion_io import (
+    dump_assertions,
+    load_assertions,
+    new_assertion_id,
+    validate_assertion,
+)
 from common.assertion_specs import (
     ASSERTION_SPECS,
     DEFAULT_SCOPE,
@@ -47,6 +52,7 @@ MAX_PHASE = 1
 STATUS_ICON = {PASS: "✅", FAIL: "❌", ERROR: "⚠️", None: "⏺️"}
 STATUS_TEXT = {PASS: "Passed", FAIL: "Failed", ERROR: "Error", None: "Not run"}
 MAX_MESSAGE_CHARS = 5000
+MAX_LOAD_ERRORS_SHOWN = 20
 
 init_session_state()
 
@@ -250,6 +256,62 @@ def render_form(questions):
             st.rerun()
 
 
+# -------------------------------------------------------------------- files
+def render_files(questions):
+    """Sidebar: load assertions from / save assertions to a YAML file."""
+    n = st.session_state.get("assertion_upload_n", 0)
+    with st.sidebar:
+        st.subheader("Assertion file")
+        uploaded = st.file_uploader(
+            "Load assertions",
+            type=["yaml", "yml"],
+            key=f"assertion_upload_{n}",
+            help="Replaces the current assertions with those in a YAML file.",
+        )
+        if uploaded is not None:
+            try:
+                text = uploaded.getvalue().decode("utf-8")
+            except UnicodeDecodeError:
+                text = None
+                st.error(f"{uploaded.name} is not a UTF-8 text file.")
+            if text is not None:
+                known_funs = {q["fun"] for q in questions.values()}
+                loaded, errors = load_assertions(text, known_funs)
+                if errors:
+                    st.error(
+                        f"Could not load {uploaded.name}. "
+                        "No assertions were changed."
+                    )
+                    for e in errors[:MAX_LOAD_ERRORS_SHOWN]:
+                        st.markdown(f"- {e}")
+                    if len(errors) > MAX_LOAD_ERRORS_SHOWN:
+                        st.markdown(
+                            f"- ...and {len(errors) - MAX_LOAD_ERRORS_SHOWN} more"
+                        )
+                else:
+                    st.session_state.alist = loaded
+                    st.session_state.assertion_results = {}
+                    _reset_form()
+                    # A new uploader key clears the widget, so the same file
+                    # can be loaded again later.
+                    st.session_state["assertion_upload_n"] = n + 1
+                    st.toast(
+                        f"Loaded {len(loaded)} assertion(s).",
+                        icon=":material/folder:",
+                    )
+                    st.rerun()
+
+        st.download_button(
+            "Save assertions to YAML",
+            data=dump_assertions(st.session_state.alist),
+            file_name="assertions.yaml",
+            mime="text/yaml",
+            icon=":material/download:",
+            disabled=not st.session_state.alist,
+            help="Download the current assertions as a YAML file.",
+        )
+
+
 # ------------------------------------------------------------------ running
 def run_requested(snapshot):
     """Runs the assertions requested by a Run button, if any."""
@@ -402,6 +464,7 @@ if "activesnap" in st.session_state and "name" in st.session_state.activesnap:
     st.subheader(f"Snapshot: {snapshot}")
 
     questions = _questions()
+    render_files(questions)
     run_requested(snapshot)
     render_form(questions)
 

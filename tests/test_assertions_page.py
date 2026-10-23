@@ -181,3 +181,113 @@ def test_remove_all(app):
     [b for b in app.button if b.label == "Remove all"][0].click().run()
     assert app.session_state["alist"] == []
     assert any("No assertions yet" in i.value for i in app.info)
+
+
+# ------------------------------------------------------------- YAML files
+EXAMPLE = os.path.join(ROOT, "examples", "assertions.yaml")
+
+
+def upload(at, content, name="assertions.yaml"):
+    n = at.session_state["assertion_upload_n"]
+    if isinstance(content, str):
+        content = content.encode("utf-8")
+    at.file_uploader(key=f"assertion_upload_{n}").set_value(
+        (name, content, "text/yaml")
+    ).run()
+
+
+def download_disabled(at):
+    return at.get("download_button")[0].proto.disabled
+
+
+def test_load_example_file(app):
+    app.session_state["qlist"] = {"Node Properties": {"fun": "nodeProperties"}}
+    upload(app, open(EXAMPLE, "rb").read())
+    assert not app.exception
+    alist = app.session_state["alist"]
+    assert [a["id"] for a in alist] == [f"a{i}" for i in range(1, 7)]
+    assert alist[5]["params"] == {"num": 2}
+    assert alist[5]["question"] == {"fun": "bgpEdges", "options": {}}
+    # question selection is untouched, uploader was reset for the next load
+    assert app.session_state["qlist"] == {"Node Properties": {"fun": "nodeProperties"}}
+    assert app.session_state["assertion_upload_n"] == 1
+    assert not app.error
+
+
+def test_load_replaces_assertions_and_results(app):
+    populate(app)
+    run_all(app)
+    upload(app, open(EXAMPLE, "rb").read())
+    assert len(app.session_state["alist"]) == 6
+    assert app.session_state["assertion_results"] == {}
+
+
+def test_same_file_can_be_loaded_again(app):
+    data = open(EXAMPLE, "rb").read()
+    upload(app, data)
+    app.button(key="del_a1").click().run()
+    assert len(app.session_state["alist"]) == 5
+    upload(app, data)
+    assert len(app.session_state["alist"]) == 6
+
+
+@pytest.mark.parametrize(
+    "text, fragment",
+    [
+        ("assertions:\n  - type: assert_nope", "unknown assertion type"),
+        (
+            "assertions:\n  - type: assert_zero_results\n    question: {fun: nope}",
+            "unknown question",
+        ),
+        ("not: [valid", "Invalid YAML"),
+        ("version: 9\nassertions: []", "Unsupported"),
+    ],
+)
+def test_bad_file_changes_nothing(app, text, fragment):
+    add(app, "assert_no_forwarding_loops")
+    before = list(app.session_state["alist"])
+    upload(app, text)
+    assert not app.exception
+    assert app.session_state["alist"] == before
+    assert any("No assertions were changed" in e.value for e in app.error)
+    assert any(fragment in m.value for m in app.sidebar.markdown), [
+        m.value for m in app.sidebar.markdown
+    ]
+    # the uploader is not reset, so the errors stay visible
+    assert app.session_state["assertion_upload_n"] == 0
+
+
+def test_non_text_file_is_rejected(app):
+    upload(app, b"\xff\xfe\x00\x80binary")
+    assert not app.exception
+    assert any("not a UTF-8" in e.value for e in app.error)
+    assert app.session_state["alist"] == []
+
+
+def test_save_button_state(app):
+    assert download_disabled(app)
+    add(app, "assert_no_forwarding_loops")
+    assert not download_disabled(app)
+
+
+def test_phase_2_assertion_in_file_does_not_break_the_page(app):
+    text = (
+        "assertions:\n"
+        "  - type: assert_flows_succeed\n"
+        "    params:\n"
+        "      startLocation: r1\n"
+        "      headers: {dstIps: 10.0.0.1}\n"
+        "  - type: assert_has_route\n"
+        "    params:\n"
+        "      expected_route: {network: 10.0.0.0/24}\n"
+        "      node: r1\n"
+    )
+    upload(app, text)
+    assert len(app.session_state["alist"]) == 2
+    run_all(app)
+    # never reported as a pass
+    assert result(app, "a1").status == "error"
+    assert result(app, "a2").status == "error"
+    assert "not supported" in result(app, "a2").message
+    app.button(key="edit_a1").click().run()  # editing a loaded phase 2 item works
+    assert not app.exception

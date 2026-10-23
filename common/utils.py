@@ -37,6 +37,7 @@ def init_session_state():
         "assertion_results": {},  # "<assertion id>@<snapshot>" -> result
         "assertion_editing": None,  # id of the assertion in the form, if any
         "assertion_form_n": 0,  # bumped to reset the form widgets
+        "assertion_upload_n": 0,  # bumped to clear the assertion file uploader
         "last_uploaded_file": None,
         "last_uploaded_questions_file": None,
     }
