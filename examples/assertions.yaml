@@ -1,0 +1,18 @@
+version: 1
+assertions:
+  - type: assert_no_undefined_references
+    description: Every referenced ACL, route-map, etc. is defined.
+  - type: assert_no_forwarding_loops
+  - type: assert_no_unestablished_bgp_sessions
+    name: BGP sessions are up
+  - type: assert_no_incompatible_ospf_sessions
+  - type: assert_zero_results
+    name: No unused structures
+    question:
+      fun: unusedStructures
+  - type: assert_num_results
+    description: Exactly two BGP edges expected.
+    question:
+      fun: bgpEdges
+    params:
+      num: 2

@@ -18,12 +18,16 @@ limitations under the License.
 import inspect
 import time
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Optional
 
+from pandas import DataFrame
 from pybatfish.client import asserts as bf_asserts
-from pybatfish.exception import BatfishAssertException
 from pybatfish.client.session import Asserts
+from pybatfish.datamodel.answer import Answer, TableAnswer
+from pybatfish.exception import BatfishAssertException
 
+from common.assertion_specs import FROM_QUESTION, get_spec
 from common.queries import get_bf_session
 
 PASS = "pass"
@@ -41,6 +45,30 @@ ANSWER_BASED = (
 )
 
 
+def batq_min_results(answer, num=1, soft=False):
+    """
+    Bat-Q's own assertion: the answer has at least `num` rows (default 1).
+    Mirrors pybatfish's hard/soft behavior and answer handling.
+    """
+    if isinstance(answer, DataFrame):
+        actual = len(answer)
+    elif isinstance(answer, TableAnswer):
+        actual = len(answer.frame())
+    elif isinstance(answer, Answer):
+        actual = answer["summary"]["numResults"]
+    else:
+        raise TypeError("Unrecognized answer type")
+    if actual < num:
+        return bf_asserts._raise_common(
+            f"Expected at least {num} results, found: {actual}", soft
+        )
+    return True
+
+
+# Assertions implemented by Bat-Q itself (spec source == "batq").
+CUSTOM = {"batq_min_results": batq_min_results}
+
+
 @dataclass
 class AssertionResult:
     """Outcome of a single assertion run."""
@@ -48,6 +76,15 @@ class AssertionResult:
     status: str  # PASS, FAIL or ERROR
     message: str = ""
     runtime: float = 0.0  # seconds
+    snapshot: str = ""
+    ran_at: str = ""
+    fun: Optional[str] = None  # question the assertion was applied to, if any
+    answer: Any = None  # that question's answer, kept to show failing rows
+
+
+def result_key(assertion_id, snapshot):
+    """Key of an assertion's result in session_state["assertion_results"]."""
+    return f"{assertion_id}@{snapshot}"
 
 
 def list_assertions():
@@ -57,15 +94,16 @@ def list_assertions():
 
     {"snapshot": [...], "answer": [...]}
     """
-    session_bound = sorted(
-        n for n in dir(Asserts) if n.startswith("assert_")
-    )
+    session_bound = sorted(n for n in dir(Asserts) if n.startswith("assert_"))
     answer_based = sorted(
         n
         for n, f in inspect.getmembers(bf_asserts, inspect.isfunction)
         if n in ANSWER_BASED
     )
-    return {"snapshot": session_bound, "answer": answer_based}
+    return {
+        "snapshot": session_bound,
+        "answer": answer_based + sorted(CUSTOM),
+    }
 
 
 def run_assertion(name: str, snapshot: Optional[str] = None, **params: Any):
@@ -75,8 +113,8 @@ def run_assertion(name: str, snapshot: Optional[str] = None, **params: Any):
     - Session-bound assertions (e.g., assert_no_forwarding_loops) are called
       through the active Batfish session, with the snapshot passed explicitly.
     - Answer-based assertions (assert_zero_results, assert_num_results,
-      assert_has_route, assert_has_no_route) are called with the params given
-      (e.g., answer=..., num=...) and ignore `snapshot`.
+      assert_has_route, assert_has_no_route, batq_min_results) are called with
+      the params given (e.g., answer=..., num=...) and ignore `snapshot`.
 
     Assertions are always run as hard assertions (soft=False), so a failed
     assertion raises BatfishAssertException, which is reported as FAIL. Any
@@ -85,7 +123,9 @@ def run_assertion(name: str, snapshot: Optional[str] = None, **params: Any):
     """
     start = time.perf_counter()
     try:
-        if name in ANSWER_BASED:
+        if name in CUSTOM:
+            CUSTOM[name](soft=False, **params)
+        elif name in ANSWER_BASED:
             fun = getattr(bf_asserts, name)
             fun(soft=False, **params)
         else:
@@ -100,3 +140,49 @@ def run_assertion(name: str, snapshot: Optional[str] = None, **params: Any):
     except Exception as e:
         status, message = ERROR, f"{type(e).__name__}: {e}"
     return AssertionResult(status, message, time.perf_counter() - start)
+
+
+def run_assertion_item(item, snapshot):
+    """
+    Runs one assertion from the assertion list (see common/assertion_io.py)
+    on a snapshot and returns an AssertionResult.
+
+    For assertions that check a question's answer, the question is run first.
+    If that question fails, the result is ERROR (never PASS or FAIL), since
+    nothing was actually checked.
+    """
+    start = time.perf_counter()
+    spec = get_spec(item.get("type"))
+    params = dict(item.get("params") or {})
+    fun = answer = None
+
+    if spec is None:
+        result = AssertionResult(ERROR, f"Unknown assertion type: {item.get('type')!r}")
+    elif spec["call"] == "answer" and spec.get("answer_from") != FROM_QUESTION:
+        result = AssertionResult(
+            ERROR, "This assertion type is not supported by this version of Bat-Q."
+        )
+    else:
+        result = None
+        if spec["call"] == "answer":
+            question = item.get("question") or {}
+            fun = question.get("fun")
+            try:
+                bf = get_bf_session()
+                options = question.get("options") or {}
+                answer = getattr(bf.q, fun)(**options).answer(snapshot=snapshot)
+            except Exception as e:
+                result = AssertionResult(
+                    ERROR, f"Question '{fun}' failed: {type(e).__name__}: {e}"
+                )
+            else:
+                params[spec["answer_param"]] = answer
+        if result is None:
+            result = run_assertion(item["type"], snapshot=snapshot, **params)
+
+    result.runtime = time.perf_counter() - start
+    result.snapshot = snapshot
+    result.ran_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    result.fun = fun
+    result.answer = answer
+    return result

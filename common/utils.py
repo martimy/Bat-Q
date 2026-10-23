@@ -33,6 +33,10 @@ def init_session_state():
         "cats": {},
         "cats_expander": [],
         "report_analysis_data": [],
+        "alist": [],  # assertions (see common/assertion_io.py)
+        "assertion_results": {},  # "<assertion id>@<snapshot>" -> result
+        "assertion_editing": None,  # id of the assertion in the form, if any
+        "assertion_form_n": 0,  # bumped to reset the form widgets
         "last_uploaded_file": None,
         "last_uploaded_questions_file": None,
     }
