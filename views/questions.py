@@ -113,9 +113,7 @@ def render_question_config(question, data, input_fields):
         variants = data.setdefault("variants", [{}])
 
         for idx, variant_opts in enumerate(variants):
-            variant_title = (
-                f"Variant #{idx + 1}" if len(variants) > 1 else "Parameters"
-            )
+            variant_title = f"Variant #{idx + 1}" if len(variants) > 1 else "Parameters"
             # if has_required:
             #     variant_title += " *"
             with st.expander(variant_title, expanded=True):
@@ -243,10 +241,14 @@ for selected_category in bf_questions:
             with select_col:
                 for question_name in questions_list:
                     fields = quest_dict.get(question_name, {}).get("input", [])
-                    has_req = any(
-                        isinstance(f, dict) and not f.get("optional", True)
-                        for f in fields
-                    ) if fields else False
+                    has_req = (
+                        any(
+                            isinstance(f, dict) and not f.get("optional", True)
+                            for f in fields
+                        )
+                        if fields
+                        else False
+                    )
                     cb_label = f"{question_name} *" if has_req else question_name
                     st.checkbox(
                         cb_label,

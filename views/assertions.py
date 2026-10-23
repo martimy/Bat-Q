@@ -46,8 +46,13 @@ from common.utils import init_session_state
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
-#STATUS_ICON = {PASS: "✅", FAIL: "❌", ERROR: "⚠️", None: "⏺️"}
-STATUS_ICON = {PASS: ":material/check:", FAIL: ":material/close:", ERROR: ":material/error_outline:", None: ":material/check_box_outline_blank:"}
+# STATUS_ICON = {PASS: "✅", FAIL: "❌", ERROR: "⚠️", None: "⏺️"}
+STATUS_ICON = {
+    PASS: ":material/check:",
+    FAIL: ":material/close:",
+    ERROR: ":material/error_outline:",
+    None: ":material/check_box_outline_blank:",
+}
 STATUS_TEXT = {PASS: "Passed", FAIL: "Failed", ERROR: "Error", None: "Not run"}
 MAX_MESSAGE_CHARS = 5000
 MAX_LOAD_ERRORS_SHOWN = 20
