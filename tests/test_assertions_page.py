@@ -4,114 +4,13 @@ Batfish session (no Batfish server needed).
 Run from the repository root:  python -m pytest tests
 """
 
-import os
-import sys
-from types import SimpleNamespace
-
 import pandas as pd
 import pytest
 
-pytest.importorskip("streamlit")
-pytest.importorskip("plotly")
-pytest.importorskip("networkx")
+from fakes import ROOT, fake_session, page_path
+from streamlit.testing.v1 import AppTest
 
-from pybatfish.exception import BatfishAssertException  # noqa: E402
-from streamlit.testing.v1 import AppTest  # noqa: E402
-
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
-PAGE = os.path.join(ROOT, "views", "assertions.py")
-
-
-class FakeQuestion:
-    def __init__(self, rows=0, fail=False, log=None):
-        self.rows, self.fail, self.log = rows, fail, log
-
-    def __call__(self, **options):
-        return self
-
-    def answer(self, snapshot=None):
-        self.log.append(snapshot)
-        if self.fail:
-            raise RuntimeError("boom")
-        return pd.DataFrame({"x": range(self.rows)})
-
-
-ROUTES = pd.DataFrame(
-    [
-        {"Node": "r1", "VRF": "default", "Network": "10.0.0.0/24", "Protocol": "bgp"},
-        {
-            "Node": "r1",
-            "VRF": "mgmt",
-            "Network": "192.168.0.0/24",
-            "Protocol": "connected",
-        },
-        {
-            "Node": "r2",
-            "VRF": "default",
-            "Network": "10.9.0.0/16",
-            "Protocol": "static",
-        },
-    ]
-)
-
-
-class FakeRoutes:
-    """Stands in for bf.q.routes: filters like the real question would."""
-
-    def __init__(self, calls):
-        self.calls, self.kw = calls, {}
-
-    def __call__(self, nodes=None, vrfs=None):
-        self.kw = {"nodes": nodes, "vrfs": vrfs}
-        self.calls.append(("routes", dict(self.kw)))
-        return self
-
-    def answer(self, snapshot=None):
-        df = ROUTES
-        if self.kw["nodes"]:
-            df = df[df["Node"] == self.kw["nodes"]]
-        if self.kw["vrfs"]:
-            df = df[df["VRF"] == self.kw["vrfs"]]
-        return SimpleNamespace(frame=lambda: df)
-
-
-def fake_session(log, calls):
-    def loops(**kw):
-        raise BatfishAssertException("Found forwarding loops")
-
-    def recorder(name, fail_if=None):
-        def fun(**kw):
-            calls.append((name, kw))
-            if fail_if and fail_if(kw):
-                raise BatfishAssertException(f"{name} failed")
-            return True
-
-        return fun
-
-    return SimpleNamespace(
-        q=SimpleNamespace(
-            undefinedReferences=FakeQuestion(0, log=log),
-            bgpEdges=FakeQuestion(3, log=log),
-            unusedStructures=FakeQuestion(fail=True, log=log),
-            routes=FakeRoutes(calls),
-        ),
-        asserts=SimpleNamespace(
-            assert_no_forwarding_loops=loops,
-            assert_no_undefined_references=lambda **kw: True,
-            assert_flows_succeed=recorder(
-                "flows_succeed", lambda kw: kw["startLocation"] == "bad"
-            ),
-            assert_flows_fail=recorder("flows_fail"),
-            assert_filter_permits=recorder(
-                "filter_permits", lambda kw: kw["filters"] == "deny_all"
-            ),
-            assert_filter_denies=recorder("filter_denies"),
-            assert_filter_has_no_unreachable_lines=recorder(
-                "no_unreachable", lambda kw: kw["filters"] == "shadowed"
-            ),
-        ),
-    )
+PAGE = page_path("assertions")
 
 
 @pytest.fixture
@@ -245,7 +144,7 @@ def test_remove_all(app):
 
 
 # ------------------------------------------------------------- YAML files
-EXAMPLE = os.path.join(ROOT, "examples", "assertions.yaml")
+EXAMPLE = str(ROOT / "examples" / "assertions.yaml")
 
 
 def upload(at, content, name="assertions.yaml"):

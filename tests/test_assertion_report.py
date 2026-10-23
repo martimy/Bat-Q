@@ -4,32 +4,24 @@ Run from the repository root:  python -m pytest tests
 """
 
 import io
-import os
-import sys
 from types import SimpleNamespace
 
 import pandas as pd
 import pytest
 
-pytest.importorskip("streamlit")
-pytest.importorskip("plotly")
-pytest.importorskip("networkx")
-openpyxl = pytest.importorskip("openpyxl")
-pytest.importorskip("xlsxwriter")
+import openpyxl
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
+from fakes import page_path
+from streamlit.testing.v1 import AppTest
 
-from streamlit.testing.v1 import AppTest  # noqa: E402
-
-from common import assertion_report as R  # noqa: E402
-from common.assertions import (  # noqa: E402
+from common import assertion_report as R
+from common.assertions import (
     AssertionResult,
     drop_snapshot_results,
     rename_snapshot_results,
 )
 
-PAGE = os.path.join(ROOT, "views", "assertion_reporting.py")
+PAGE = page_path("assertion_reporting")
 SNAP = "snap1"
 
 

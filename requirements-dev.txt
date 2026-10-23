@@ -1,0 +1,5 @@
+# Test-only dependencies. Install the app's own dependencies first:
+#   pip install -r requirements.txt -r requirements-dev.txt
+pytest>=8
+pytest-cov>=5
+openpyxl>=3.1   # reads the .xlsx reports back in tests

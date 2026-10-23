@@ -4,8 +4,6 @@ Run from the repository root:  python -m pytest tests
 """
 
 import inspect
-import os
-import sys
 
 import pandas as pd
 from types import SimpleNamespace
@@ -13,19 +11,15 @@ import pytest
 from pybatfish.client import asserts as bf_asserts
 from pybatfish.client.session import Asserts
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from fakes import ROOT
 
-from common import assertion_io as io  # noqa: E402
-from common.assertion_specs import (  # noqa: E402
+from common import assertion_io as io
+from common.assertion_specs import (
     ASSERTION_SPECS,
     HIDDEN_PARAMS,
 )
 
-EXAMPLE = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "examples",
-    "assertions.yaml",
-)
+EXAMPLE = str(ROOT / "examples" / "assertions.yaml")
 
 
 def _pybatfish_function(name, spec):
@@ -157,7 +151,6 @@ def test_unknown_question_checked_when_funs_given():
 
 # ------------------------------------------------------------------- runner
 def test_runner_statuses():
-    pytest.importorskip("streamlit")
     from common import assertions as A
 
     df2 = pd.DataFrame({"a": [1, 2]})
@@ -205,7 +198,6 @@ def test_valid_flow_and_route_params():
 
 # ---------------------------------------------------- Phase 2: runner logic
 def _runner():
-    pytest.importorskip("streamlit")
     from common import assertions as A
 
     return A
@@ -303,3 +295,15 @@ def test_routes_question_failure_is_an_error(monkeypatch):
     assert (
         r.status == "error" and "routes" in r.message and "no connection" in r.message
     )
+
+
+def test_specs_by_group_follows_registry_order_and_phase():
+    from common.assertion_specs import specs_by_group
+
+    everything = specs_by_group()
+    assert sum(len(v) for v in everything.values()) == len(ASSERTION_SPECS)
+    assert list(everything)[0] == "Snapshot checks"
+    phase1 = specs_by_group(max_phase=1)
+    assert all(ASSERTION_SPECS[n]["phase"] <= 1 for v in phase1.values() for n in v)
+    assert "assert_has_route" in everything["Routing"]
+    assert "Routing" not in phase1
