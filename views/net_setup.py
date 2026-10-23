@@ -21,6 +21,7 @@ import pandas as pd
 from pybatfish.client.session import Session
 import logging
 import socket
+from common.assertions import drop_snapshot_results, rename_snapshot_results
 from common.utils import init_session_state
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
@@ -126,6 +127,7 @@ def switch_network(bf_session, network_name):
         st.session_state.activesnap = {}
         st.session_state.altsnap = {}
         st.session_state.last_uploaded_file = None
+        st.session_state.assertion_results = {}  # belong to the old network
 
 
 def unique_snapshot_name(base_name, existing):
@@ -176,6 +178,9 @@ def upload_snapshot(bf_session):
 
 
 def clear_snapshot_refs(name):
+    st.session_state.assertion_results = drop_snapshot_results(
+        st.session_state.assertion_results, name
+    )
     if st.session_state.activesnap.get("name") == name:
         st.session_state.activesnap = {}
         st.session_state["report_analysis_data"] = []
@@ -184,6 +189,9 @@ def clear_snapshot_refs(name):
 
 
 def rename_snapshot_refs(old_name, new_name):
+    st.session_state.assertion_results = rename_snapshot_results(
+        st.session_state.assertion_results, old_name, new_name
+    )
     if st.session_state.activesnap.get("name") == old_name:
         st.session_state.activesnap["name"] = new_name
     if st.session_state.altsnap.get("name") == old_name:
