@@ -92,6 +92,7 @@ def sort_qlist_by_schema(qlist, questions_data=None):
     if questions_data is None:
         try:
             from common.bfqs import read_questions
+
             questions_data = read_questions()["Batfish"]
         except Exception:
             return qlist
