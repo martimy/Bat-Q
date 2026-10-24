@@ -160,9 +160,10 @@ def test_row_count_assertions(bf_state):
     bf = bf_state["bf_session"]
     n = rows(bf, "nodeProperties")
     assert n > 0
-    run = lambda a_type, **p: run_assertion_item(
-        item(a_type, NODES, **p), "live"
-    )  # noqa: E731
+
+    def run(a_type, **p):
+        return run_assertion_item(item(a_type, NODES, **p), "live")
+
     assert run("assert_num_results", num=n).status == "pass"
     assert run("assert_num_results", num=n + 1).status == "fail"
     assert run("batq_min_results", num=n).status == "pass"
@@ -197,16 +198,14 @@ def test_a_failing_assertion_keeps_the_rows_it_looked_at(bf_state):
     assert result.snapshot == "live"
 
 
-def test_a_broken_question_is_an_error(bf_state):
-    bad = {"fun": "nodeProperties", "options": {"nodes": "/("}}
-    assert (
-        run_assertion_item(item("assert_zero_results", bad), "live").status == "error"
-    )
+def test_a_question_that_cannot_be_run_is_an_error(bf_state):
+    # pybatfish rejects an unknown parameter or question before any request
+    bad_option = {"fun": "nodeProperties", "options": {"bogusParam": 1}}
     unknown = {"fun": "noSuchQuestion"}
-    assert (
-        run_assertion_item(item("assert_zero_results", unknown), "live").status
-        == "error"
-    )
+    for question in (bad_option, unknown):
+        result = run_assertion_item(item("assert_zero_results", question), "live")
+        assert result.status == "error", result.message
+        assert "failed" in result.message
 
 
 # -------------------------------------------------------------------- routes

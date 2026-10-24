@@ -52,7 +52,8 @@ def test_analysis_page_with_real_answers(bf):
     }
     at = open_page("analysis", bf, activesnap=dict(LIVE), qlist=qlist)
     data = at.session_state["report_analysis_data"]
-    assert [d["name"] for d in data] == list(qlist)
+    # the page runs the questions in schema order, not the order of the dict
+    assert {d["name"] for d in data} == set(qlist)
     # a dictionary is accepted where Batfish expects header constraints
     assert all(d["answer"] is not None for d in data), [d["name"] for d in data]
     assert "as1border1" in all_cells(at)
