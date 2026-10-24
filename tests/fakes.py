@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 from pybatfish.exception import BatfishAssertException
+from pybatfish.util import validate_name
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -217,6 +218,7 @@ class FakeBatfish:
         self.q = _Questions(self)
 
     def set_network(self, name):
+        validate_name(name, "network")  # like the real session
         self.calls.append(("set_network", name))
         self.networks.setdefault(name, [])
         self.network = name
@@ -230,6 +232,7 @@ class FakeBatfish:
         return name
 
     def init_snapshot(self, file, name=None, overwrite=False):
+        validate_name(name)  # like the real session
         self.calls.append(("init_snapshot", name, overwrite))
         if self.reject_uploads:
             raise ValueError("not a valid snapshot")
@@ -248,6 +251,7 @@ class FakeBatfish:
         self.networks[self.network].remove(name)
 
     def fork_snapshot(self, **kwargs):
+        validate_name(kwargs["name"])  # like the real session
         self.calls.append(("fork_snapshot", dict(kwargs)))
         snaps = self.networks[self.network]
         if kwargs["name"] not in snaps:

@@ -1,0 +1,50 @@
+name: Integration tests
+
+# Runs the tests in tests/integration against a real Batfish server.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"  # Mondays: catches changes in Batfish/pybatfish
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BATFISH_INTEGRATION: "1"  # a missing server is an error, not a skip
+    services:
+      batfish:
+        image: batfish/batfish
+        ports:
+          - 9996:9996
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Wait for Batfish
+        run: |
+          for i in $(seq 1 60); do
+            if (echo > /dev/tcp/localhost/9996) 2>/dev/null; then exit 0; fi
+            sleep 2
+          done
+          echo "Batfish did not start" >&2
+          exit 1
+
+      - name: Run integration tests
+        run: python -m pytest tests/integration -m integration
