@@ -235,6 +235,22 @@ def test_an_uploaded_snapshot_never_overwrites_an_existing_one(server):
     assert box(at, "Main Snapshot").options == ["snapA", "snapB", "snapA_1"]
 
 
+@pytest.mark.parametrize(
+    "filename", ["my network.zip", "net (1).zip", "campus.v2.zip", "résumé.zip"]
+)
+def test_an_upload_whose_file_name_is_not_a_valid_snapshot_name_is_refused(
+    server, filename
+):
+    """
+    The snapshot is named after the file, and Batfish only accepts letters,
+    digits, '-' and '_'. The error says why, but the upload is lost.
+    """
+    at = open_page()
+    upload(at, filename)
+    assert any("is not a valid name for snapshot" in e.value for e in at.error)
+    assert server.networks["NETWORK"] == ["snapA", "snapB"]
+
+
 def test_the_same_upload_is_not_added_twice(server):
     at = open_page()
     upload(at, "net.zip")
@@ -372,3 +388,16 @@ def test_errors_stay_visible_when_part_of_the_changes_succeeded(server, editor):
     editor["snapB"] = {"Rename to": "renamed"}
     click(at, "Apply Snapshot Changes")
     assert any("Delete 'snapA'" in e.value for e in at.error)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="Latent bug: a network name with a space (or any character other "
+    "than letters, digits, '-' and '_') makes Batfish raise ValueError, which "
+    "nothing catches, so the page shows a traceback instead of a message.",
+)
+def test_an_invalid_network_name_is_reported_not_a_crash(server):
+    at = open_page()
+    field(at, "Network Name").set_value("My Lab").run()
+    assert not at.exception
+    assert at.error
