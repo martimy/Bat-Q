@@ -32,3 +32,17 @@ must pass exactly when `detectLoops` returns no rows. This keeps the tests valid
 when Batfish's modelling of the example network changes. Where a verdict is
 certain by construction (`num` + 1 rows, a TEST-NET route, a missing node), the
 tests assert it directly.
+
+## If a test seems to hang
+
+pybatfish waits a long time before giving up on an unresponsive Batfish: each
+request may wait 30 s and is retried with growing pauses, roughly five minutes
+or more in total. A slow or stuck server therefore looks like a frozen test.
+
+1. Run with names and a stack dump: `python -m pytest tests/integration -v -x`
+   (`pytest.ini` already prints every thread's stack after 180 s).
+2. Look at the server: `docker stats --no-stream batfish` and
+   `docker logs --tail 80 batfish`. A container near its memory limit, or one
+   that has restarted, explains stalls after the heavier flow and filter checks.
+3. Re-run the stuck test alone. If it passes at once, the server had become slow
+   during the earlier tests rather than the test being wrong.
