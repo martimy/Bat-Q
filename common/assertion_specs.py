@@ -78,7 +78,7 @@ ASSERTION_SPECS = {
     },
     "assert_no_unestablished_bgp_sessions": {
         "label": "No unestablished BGP sessions",
-        "description": "All configured BGP sessions are established.",
+        "description": "No BGP session is compatible but not established.",
         "group": "Snapshot checks",
         "phase": 1,
         "source": "pybatfish",
@@ -100,7 +100,7 @@ ASSERTION_SPECS = {
     },
     "assert_no_incompatible_ospf_sessions": {
         "label": "No incompatible OSPF sessions",
-        "description": "No OSPF sessions have incompatible settings.",
+        "description": "No OSPF session is incompatible or unestablished.",
         "group": "Snapshot checks",
         "phase": 1,
         "source": "pybatfish",
@@ -159,7 +159,7 @@ ASSERTION_SPECS = {
     # ---- Reachability ---------------------------------------------------
     "assert_flows_succeed": {
         "label": "Flows succeed",
-        "description": "The described flows are delivered.",
+        "description": "The described flows succeed.",
         "group": "Reachability",
         "phase": 2,
         "source": "pybatfish",
@@ -171,7 +171,7 @@ ASSERTION_SPECS = {
     },
     "assert_flows_fail": {
         "label": "Flows fail",
-        "description": "The described flows are not delivered.",
+        "description": "The described flows fail.",
         "group": "Reachability",
         "phase": 2,
         "source": "pybatfish",

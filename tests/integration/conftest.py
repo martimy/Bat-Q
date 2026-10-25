@@ -42,7 +42,7 @@ def server():
         return HOST
     message = (
         f"No Batfish server at {HOST}:{PORT}. Start one with "
-        "'docker run -d -p 9996:9996 batfish/batfish' "
+        "'docker run -d -p 9996:9996 -p 9997:9997 batfish/allinone' "
         "(set BATFISH_SERVER for another host)."
     )
     if REQUIRED:

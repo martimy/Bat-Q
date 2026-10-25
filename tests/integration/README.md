@@ -7,8 +7,8 @@ use fakes and never need a server.
 ## Running them
 
 ```bash
-# 1. start Batfish (only port 9996 is needed with a current pybatfish)
-docker run --name batfish -d -p 9996:9996 batfish/batfish
+# 1. start Batfish (the same image Bat-Q's README uses; any running Batfish works)
+docker run --name batfish -d -p 9996:9996 -p 9997:9997 batfish/allinone
 
 # 2. run the integration tests
 python -m pytest tests/integration -m integration

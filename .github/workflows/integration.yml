@@ -20,9 +20,10 @@ jobs:
       BATFISH_INTEGRATION: "1"  # a missing server is an error, not a skip
     services:
       batfish:
-        image: batfish/batfish
+        image: batfish/allinone
         ports:
           - 9996:9996
+          - 9997:9997
     steps:
       - uses: actions/checkout@v7
 
