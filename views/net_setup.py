@@ -19,10 +19,11 @@ import os
 import streamlit as st
 import pandas as pd
 from pybatfish.client.session import Session
+from pybatfish.util import validate_name
 import logging
 import socket
 from common.assertions import drop_snapshot_results, rename_snapshot_results
-from common.utils import init_session_state
+from common.utils import init_session_state, safe_snapshot_name
 
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
@@ -150,7 +151,9 @@ def upload_snapshot(bf_session):
         if uploaded_file is not None:
             file_id = f"{uploaded_file.name}_{uploaded_file.size}"
             if st.session_state.get("last_uploaded_file") != file_id:
-                base_name = uploaded_file.name.rsplit(".", 1)[0]
+                # Batfish only accepts letters, digits, '-' and '_', so a file
+                # called "my network (1).zip" becomes the snapshot my_network_1
+                base_name = safe_snapshot_name(uploaded_file.name)
                 existing = bf_session.list_snapshots()
 
                 # Never overwrite an existing snapshot on upload -- give the
@@ -168,8 +171,14 @@ def upload_snapshot(bf_session):
                         "failednodes": [],
                         "failedinfs": [],
                     }
+                    note = (
+                        " (the file name was adjusted: Batfish allows only "
+                        "letters, digits, '-' and '_')"
+                        if base_name != uploaded_file.name.rsplit(".", 1)[0]
+                        else ""
+                    )
                     st.toast(
-                        f"Snapshot '{new_name}' uploaded successfully!",
+                        f"Snapshot '{new_name}' uploaded successfully!{note}",
                         icon=":material/check:",
                     )
                     st.rerun()
@@ -205,6 +214,10 @@ def render_snapshot_manager(bf_session):
     fork-to-new-name followed by deleting the old one.
     """
     snapshots = bf_session.list_snapshots()
+
+    # Errors from the previous click (it reran the page after a partial success)
+    for err in st.session_state.pop("snapshot_errors", []):
+        st.error(err)
 
     st.subheader("Manage Snapshots", help=SNAPSHOT)
 
@@ -268,15 +281,16 @@ def render_snapshot_manager(bf_session):
                 except Exception as e:
                     errors.append(f"Rename '{old_name}' to '{new_name}': {e}")
 
-        for err in errors:
-            st.error(err)
-
         if renamed or deleted:
+            st.session_state["snapshot_errors"] = errors  # shown after the rerun
             st.toast(
                 f"Applied: {renamed} renamed, {deleted} deleted.",
                 icon=":material/check:",
             )
             st.rerun()
+
+        for err in errors:
+            st.error(err)
 
     return bf_session.list_snapshots()
 
@@ -301,7 +315,7 @@ msg = test_connection(bf_host)
 if msg == "":
     bf_session = get_or_create_session(bf_host)
 
-    st.session_state.network_name = (
+    entered_name = (
         st.text_input(
             "Network Name",
             value=st.session_state.network_name,
@@ -309,6 +323,14 @@ if msg == "":
         ).strip()
         or st.session_state.network_name
     )
+    try:
+        validate_name(entered_name, "network")
+        st.session_state.network_name = entered_name
+    except ValueError as e:
+        st.error(
+            f"Invalid network name: {e}. Network names may use letters, digits, "
+            f"'-' and '_'. Staying on '{st.session_state.network_name}'."
+        )
 
     switch_network(bf_session, st.session_state.network_name)
     upload_snapshot(bf_session)

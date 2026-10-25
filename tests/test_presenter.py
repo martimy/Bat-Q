@@ -135,14 +135,30 @@ def test_json_to_dataframe_expands_multi_key_details_into_rows():
     assert df["Detail"].tolist() == [1, 2] and df["Node"].tolist() == ["r", "r"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Latent bug: a step whose detail is a plain value (not a dict) "
-    "raises 'If using all scalar values, you must pass an index'.",
-)
 def test_json_to_dataframe_with_scalar_detail():
     df = P.json_to_dataframe(make_trace([hop("r", ("X", "A", "scalar"))]))
     assert df["Detail"].tolist() == ["scalar"]
+    assert df["Node"].tolist() == ["r"]
+
+
+@pytest.mark.parametrize("detail", [None, 5, 2.5, True, "text"])
+def test_json_to_dataframe_with_any_plain_detail(detail):
+    df = P.json_to_dataframe(make_trace([hop("r", ("X", "A", detail))]))
+    assert len(df) == 1 and df["Node"].tolist() == ["r"]
+
+
+def test_json_to_dataframe_expands_list_details_into_rows():
+    df = P.json_to_dataframe(make_trace([hop("r", ("X", "A", ["a", "b"]))]))
+    assert df["Detail"].tolist() == ["a", "b"] and df["Node"].tolist() == ["r", "r"]
+
+
+def test_json_to_dataframe_keeps_order_with_mixed_details():
+    t = make_trace(
+        [hop("r1", ("X", "A", {"k": "v"}), ("Y", "B", "plain"), ("Z", "C", None))]
+    )
+    df = P.json_to_dataframe(t)
+    assert df["Type"].tolist() == ["X", "Y", "Z"]
+    assert df["Detail"].tolist() == ["v", "plain", None]
 
 
 # ------------------------------------------------------- flatten_trace_data
@@ -191,14 +207,4 @@ def test_flatten_trace_data_of_nothing():
 def test_question_lists_refer_to_real_questions():
     funs = {q["fun"] for c in read_questions()["Batfish"] for q in c["questions"]}
     assert set(P.topology_questions) <= funs
-    assert set(P.select_questions) - {"Routes"} <= funs
-
-
-@pytest.mark.xfail(
-    strict=True,
-    reason="Latent bug: select_questions has 'Routes' but the question's "
-    "function name is 'routes', so it never gets the select-style formatting.",
-)
-def test_select_questions_match_schema_function_names():
-    funs = {q["fun"] for c in read_questions()["Batfish"] for q in c["questions"]}
     assert set(P.select_questions) <= funs

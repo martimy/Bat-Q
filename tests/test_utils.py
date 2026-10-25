@@ -54,24 +54,69 @@ def test_get_next_item_never_reuses_a_name():
     assert items == ["Q", "Q_1", "Q_2", "Q_3", "Q_4", "Q_5"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Latent bug: the base name is taken before the first '_', so a "
-    "name containing '_' gets an existing name back. Not reachable today "
-    "because no question name contains '_' (see test_bfqs.py).",
-)
 def test_get_next_item_with_underscore_in_name_is_unique():
-    items = ["A_b", "A_b_1"]
-    assert U.get_next_item("A_b", items) not in items
+    assert U.get_next_item("A_b", ["A_b", "A_b_1"]) == "A_b_2"
+    assert U.get_next_item("A_b_1", ["A_b", "A_b_1"]) == "A_b_2"
+    assert U.get_next_item("A_b", ["A_b"]) == "A_b_1"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Latent bug: a non-numeric suffix after a matching prefix raises "
-    "ValueError instead of being ignored.",
-)
 def test_get_highest_number_ignores_non_numeric_suffix():
     assert U.get_highest_number("Why", ["Why_3x"]) is None
+
+
+def test_names_with_special_characters_are_matched_literally():
+    items = ["Trace (a+b)", "Trace (a+b)_2", "Trace (aab)_9", "Trace .*_7"]
+    assert U.get_highest_number("Trace (a+b)", items) == "Trace (a+b)_2"
+    assert U.get_highest_number("Trace .*", items) == "Trace .*_7"
+    assert U.get_next_item("Trace (a+b)", items) == "Trace (a+b)_3"
+
+
+def test_get_same_prefix_only_matches_the_name_and_its_numbered_copies():
+    items = ["Why", "Why_3", "Whyever", "Why_x", "Why_3_1", "Other_3"]
+    assert U.get_same_prefix("Why_3", items) == ("Why", ["Why", "Why_3"])
+    # a name ending in a number inside another name is a different base name
+    assert U.get_same_prefix("Why_3_1", items) == ("Why_3", ["Why_3", "Why_3_1"])
+
+
+# ----------------------------------------------------------- safe_snapshot_name
+@pytest.mark.parametrize(
+    "file_name, expected",
+    [
+        ("campus.zip", "campus"),
+        ("my network.zip", "my_network"),
+        ("net (1).zip", "net_1"),
+        ("campus.v2.zip", "campus_v2"),
+        ("résumé.zip", "resume"),
+        ("a  b---c__d.zip", "a_b---c__d"),
+        ("  spaced  .zip", "spaced"),
+        ("no_extension", "no_extension"),
+        ("日本語.zip", "snapshot"),
+        ("(1).zip", "1"),
+        ("....zip", "snapshot"),
+        ("settings.zip", "settings_1"),
+        ("Settings.ZIP", "Settings_1"),
+    ],
+)
+def test_safe_snapshot_name(file_name, expected):
+    assert U.safe_snapshot_name(file_name) == expected
+
+
+@pytest.mark.parametrize(
+    "file_name",
+    [
+        "x" * 300 + ".zip",
+        "a/b\\c.zip",
+        "weird \u202e name.zip",
+        "emoji 😀.zip",
+        ".zip",
+        "",
+    ],
+)
+def test_safe_snapshot_names_are_always_accepted_by_batfish(file_name):
+    from pybatfish.util import validate_name
+
+    assert validate_name(U.safe_snapshot_name(file_name))
+    assert len(U.safe_snapshot_name(file_name)) <= U.MAX_NAME_LENGTH
 
 
 # --------------------------------------------------------- sort_qlist_by_schema

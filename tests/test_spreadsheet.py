@@ -149,3 +149,9 @@ def test_select_questions_are_cleaned_like_the_report_page():
     out = S.question_to_dataframe("fileParseStatus", FakeAnswer(df))
     assert list(out.columns) == ["File", "Status"]
     assert out["Status"].tolist() == ["PASSED", ""]  # blank, not missing
+
+
+def test_routes_answers_are_cleaned_like_other_select_questions():
+    df = pd.DataFrame({"Node": ["r1", "r2"], "Network": ["10.0.0.0/24", None]})
+    out = S.question_to_dataframe("routes", FakeAnswer(df))
+    assert out["Network"].tolist() == ["10.0.0.0/24", ""]
