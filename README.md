@@ -13,7 +13,7 @@ To learn more about Bat-Q and how to use it, please watch these [YouTube tutoria
 
 No installation needed! Click the badge above to launch Bat-Q in a ready-to-use GitHub Codespace. Batfish and Streamlit start automatically; once the Codespace is ready, a browser tab will open with the app running. Use the `abc_net.zip` example provided to try out Bat-Q.
 
-## Release Notes - v0.3
+## Release Notes - v0.3.1
 
 - Assertions page: define checks that must hold in your network (no forwarding loops, no undefined references, BGP/OSPF session health, reachability, filters, routes, and the number of rows any question returns), run them on the active snapshot, and see which passed, failed or could not be evaluated. Assertions can be saved to and loaded from YAML files. See the [Assertions guide](docs/assertions.md).
 - Assertion reports in HTML and Excel, separate from the analysis report.

@@ -28,7 +28,7 @@ from common.utils import init_session_state, safe_snapshot_name
 logging.getLogger("pybatfish").setLevel(logging.WARNING)
 
 INTRO = r"""
-**Bat-Q** v0.2  
+**Bat-Q** v0.3.1  
 Copyright 2023-2026 Maen Artimy    
 
 Bat-Q is a web app that lets you analyze your network configuration files using 
