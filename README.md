@@ -13,6 +13,13 @@ To learn more about Bat-Q and how to use it, please watch these [YouTube tutoria
 
 No installation needed! Click the badge above to launch Bat-Q in a ready-to-use GitHub Codespace. Batfish and Streamlit start automatically; once the Codespace is ready, a browser tab will open with the app running. Use the `abc_net.zip` example provided to try out Bat-Q.
 
+## Release Notes - v0.3
+
+- Assertions page: define checks that must hold in your network (no forwarding loops, no undefined references, BGP/OSPF session health, reachability, filters, routes, and the number of rows any question returns), run them on the active snapshot, and see which passed, failed or could not be evaluated. Assertions can be saved to and loaded from YAML files. See the [Assertions guide](docs/assertions.md).
+- Assertion reports in HTML and Excel, separate from the analysis report.
+- Snapshot uploads with file names that Batfish would refuse (such as `my network (1).zip`) are cleaned up (`my_network_1`); an invalid network name is reported instead of crashing the page; errors from renaming or deleting snapshots stay visible.
+- A unit and integration test suite, run by GitHub Actions. See [Testing](docs/testing.md).
+
 ## Release Notes - Version v0.2
 
 Version v0.2 introduces key architectural updates, interactive visualization, improved snapshot management, and enhanced user feedback:
@@ -90,9 +97,18 @@ This is all that is needed for Bat-Q, but you can consult the [Batfish installat
     $ streamlit run Home.py
     ```
 
+## Testing
+
+```
+$ pip3 install -r requirements.txt -r requirements-dev.txt
+$ python -m pytest
+```
+
+The unit tests need no Batfish server. Tests that use a real server are skipped unless one is running. See [Testing](docs/testing.md) for details.
+
 ## User Guide
 
-Here is how to [get started](docs/getting-started.md) using Bat-Q
+Here is how to [get started](https://github.com/martimy/Bat-Q/blob/main/docs/getting-started.md) using Bat-Q. The [Assertions guide](https://github.com/martimy/Bat-Q/blob/main/docs/assertions.md) explains how to check that your network meets your requirements.
 
 ## Author
 

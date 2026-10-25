@@ -16,17 +16,18 @@ assertions:
       fun: bgpEdges
     params:
       num: 2
-  # The next three use device names from the abc_net example; adjust for your network.
+  # The next three use names from Batfish's own example network (as1border1, the
+  # OUTSIDE_TO_INSIDE ACL, host1); change names and values to match your snapshot.
   - type: assert_flows_succeed
-    description: Web traffic from border1 reaches the server.
+    description: Web traffic from as1border1 reaches host1.
     params:
       startLocation: as1border1
       headers:
-        dstIps: 10.0.0.1
+        dstIps: 2.128.0.101
         applications: [HTTP]
   - type: assert_filter_permits
     params:
-      filters: acl_in
+      filters: OUTSIDE_TO_INSIDE
       headers:
         srcIps: 1.1.1.1
   - type: assert_has_route
