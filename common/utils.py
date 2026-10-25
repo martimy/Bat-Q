@@ -16,6 +16,8 @@ limitations under the License.
 """
 
 import re
+import unicodedata
+
 import streamlit as st
 
 
@@ -46,25 +48,41 @@ def init_session_state():
             st.session_state[key] = value
 
 
+_NUMBERED = re.compile(r"(?P<base>.*)_(?P<number>\d+)")
+
+
+def _split_number(item):
+    """("Why_3") -> ("Why", 3); ("Why") -> ("Why", None). Only a trailing _<digits> counts."""
+    match = _NUMBERED.fullmatch(item)
+    if match:
+        return match["base"], int(match["number"])
+    return item, None
+
+
 def get_same_prefix(input_item, item_list):
-    prefix = input_item.split("_")[0]  # Extract the prefix before any trailing number
-    matching_items = [item for item in item_list if item.startswith(prefix)]
+    """
+    The base name of an item (without a trailing _<number>) and the items
+    that are that name or a numbered copy of it.
+    """
+    prefix, _ = _split_number(input_item)
+    matching_items = []
+    for item in item_list:
+        base, number = _split_number(item)
+        if item == prefix or (number is not None and base == prefix):
+            matching_items.append(item)
     return prefix, matching_items
 
 
 def get_highest_number(input_item, item_list):
-    prefix, matching_items = get_same_prefix(input_item, item_list)
+    """The item named <input_item>_<number> with the highest number, or None."""
+    pattern = re.compile(rf"{re.escape(input_item)}_(\d+)")
     highest_item = None
     highest_number = -1
-
-    for item in matching_items:
-        match = re.match(rf"{input_item}_\d+", item)
-        if match:
-            trailing_number = int(item[len(input_item) + 1 :])
-            if trailing_number > highest_number:
-                highest_number = trailing_number
-                highest_item = item
-
+    for item in item_list:
+        match = pattern.fullmatch(item)
+        if match and int(match[1]) > highest_number:
+            highest_number = int(match[1])
+            highest_item = item
     return highest_item
 
 
@@ -73,12 +91,32 @@ def get_next_item(input_item, item_list):
     highest_item = get_highest_number(prefix, item_list)
 
     if highest_item:
-        highest_number = int(highest_item.split("_")[1])
-        next_available_number = highest_number + 1
-        next_available_item = f"{prefix}_{next_available_number}"
-        return next_available_item
-    else:
-        return f"{input_item}_1"
+        highest_number = int(highest_item.rsplit("_", 1)[1])
+        return f"{prefix}_{highest_number + 1}"
+    return f"{input_item}_1"
+
+
+MAX_NAME_LENGTH = 100  # Batfish allows 150; stay well inside it
+
+
+def safe_snapshot_name(file_name):
+    """
+    A snapshot name Batfish accepts, made from an uploaded file's name.
+
+    Batfish only allows letters, digits, '-' and '_' (and rejects "settings"),
+    but file names often contain spaces, dots or "(1)". The extension is
+    dropped, accents are removed, and any other run of characters becomes '_'.
+
+    >>> safe_snapshot_name("my network (1).zip")
+    'my_network_1'
+    """
+    base = file_name.rsplit(".", 1)[0] if "." in file_name else file_name
+    base = unicodedata.normalize("NFKD", base).encode("ascii", "ignore").decode()
+    name = re.sub(r"[^A-Za-z0-9_-]+", "_", base).strip("_")[:MAX_NAME_LENGTH]
+    name = name.strip("_") or "snapshot"
+    if name.lower() == "settings":  # reserved by Batfish
+        name += "_1"
+    return name
 
 
 def sort_qlist_by_schema(qlist, questions_data=None):

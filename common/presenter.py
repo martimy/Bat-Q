@@ -28,7 +28,7 @@ nan = float("NaN")
 
 select_questions = [
     "layer3Edges",
-    "Routes",
+    "routes",
     "fileParseStatus",
     "userProvidedLayer1Edges",
 ]
@@ -147,14 +147,18 @@ def json_to_dataframe(trace):
     for hop in trace["hops"]:
         node = hop["node"]["name"]
         for step in hop["steps"]:
-            new_trace = pd.DataFrame(
-                {
-                    "Node": node,
-                    "Type": step["type"],
-                    "Action": step["action"],
-                    "Detail": step["detail"],
-                }
-            )
+            row = {
+                "Node": node,
+                "Type": step["type"],
+                "Action": step["action"],
+                "Detail": step["detail"],
+            }
+            # A dict or list detail becomes one row per entry; any other
+            # value (text, number, None) is a single row.
+            if isinstance(step["detail"], (dict, list, tuple)):
+                new_trace = pd.DataFrame(row)
+            else:
+                new_trace = pd.DataFrame(row, index=[0])
             traces_table = pd.concat([traces_table, new_trace], ignore_index=True)
     return traces_table
 

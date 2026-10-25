@@ -236,19 +236,32 @@ def test_an_uploaded_snapshot_never_overwrites_an_existing_one(server):
 
 
 @pytest.mark.parametrize(
-    "filename", ["my network.zip", "net (1).zip", "campus.v2.zip", "résumé.zip"]
+    "filename, snapshot",
+    [
+        ("my network.zip", "my_network"),
+        ("net (1).zip", "net_1"),
+        ("campus.v2.zip", "campus_v2"),
+        ("résumé.zip", "resume"),
+        ("日本語.zip", "snapshot"),
+    ],
 )
-def test_an_upload_whose_file_name_is_not_a_valid_snapshot_name_is_refused(
-    server, filename
-):
-    """
-    The snapshot is named after the file, and Batfish only accepts letters,
-    digits, '-' and '_'. The error says why, but the upload is lost.
-    """
+def test_the_snapshot_name_is_made_valid_for_batfish(server, filename, snapshot):
+    """The snapshot is named after the file, but Batfish only accepts
+    letters, digits, '-' and '_', so the name is cleaned up."""
     at = open_page()
     upload(at, filename)
-    assert any("is not a valid name for snapshot" in e.value for e in at.error)
-    assert server.networks["NETWORK"] == ["snapA", "snapB"]
+    assert not at.error, [e.value for e in at.error]
+    assert ("init_snapshot", snapshot, False) in server.calls
+    assert server.networks["NETWORK"] == ["snapA", "snapB", snapshot]
+    assert at.session_state["activesnap"]["name"] == snapshot
+
+
+def test_a_cleaned_up_name_that_is_taken_gets_a_number(server):
+    server.networks["NETWORK"].append("my_net")
+    at = open_page()
+    upload(at, "my net.zip")
+    assert ("init_snapshot", "my_net_1", False) in server.calls
+    assert at.session_state["activesnap"]["name"] == "my_net_1"
 
 
 def test_the_same_upload_is_not_added_twice(server):
@@ -375,29 +388,35 @@ def test_the_other_changes_are_still_applied_when_one_fails(server, editor):
     assert server.networks["NETWORK"] == ["snapA", "renamed"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Latent bug: errors are displayed and then immediately lost, because "
-    "the page reruns when anything else in the same click succeeded. Only a "
-    "toast reports the partial result.",
-)
 def test_errors_stay_visible_when_part_of_the_changes_succeeded(server, editor):
     server.fail_delete.add("snapA")
     at = open_page()
     editor["snapA"] = {"Delete": True}
     editor["snapB"] = {"Rename to": "renamed"}
     click(at, "Apply Snapshot Changes")
-    assert any("Delete 'snapA'" in e.value for e in at.error)
+    assert [e.value for e in at.error] == ["Delete 'snapA': cannot delete snapA"]
+    assert server.networks["NETWORK"] == ["snapA", "renamed"]  # the rename went through
+    at.run()  # the message is shown once, not on every later rerun
+    assert not at.error
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Latent bug: a network name with a space (or any character other "
-    "than letters, digits, '-' and '_') makes Batfish raise ValueError, which "
-    "nothing catches, so the page shows a traceback instead of a message.",
-)
-def test_an_invalid_network_name_is_reported_not_a_crash(server):
+@pytest.mark.parametrize("name", ["My Lab", "a/b", "settings", "x" * 151, "lab.1"])
+def test_an_invalid_network_name_is_reported_and_the_old_network_is_kept(server, name):
+    at = open_page()
+    field(at, "Network Name").set_value(name).run()
+    assert not at.exception, [e.value for e in at.exception]
+    assert any("Invalid network name" in e.value for e in at.error)
+    assert at.session_state["network_name"] == "NETWORK"
+    assert server.calls_named("set_network") == [("set_network", "NETWORK")]
+    # the page still works on the old network
+    assert box(at, "Main Snapshot").options == ["snapA", "snapB"]
+
+
+def test_a_valid_network_name_works_after_an_invalid_one(server):
+    server.networks["LAB"] = ["labsnap"]
     at = open_page()
     field(at, "Network Name").set_value("My Lab").run()
-    assert not at.exception
     assert at.error
+    field(at, "Network Name").set_value("LAB").run()
+    assert not at.error
+    assert box(at, "Main Snapshot").options == ["labsnap"]
