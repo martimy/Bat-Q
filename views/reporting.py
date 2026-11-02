@@ -1,7 +1,10 @@
 import streamlit as st
 from datetime import datetime
 from common.htmlreport import render_result_html, build_report_html
+from common.spreadsheet import build_report_xlsx
 from common.utils import init_session_state
+
+XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 init_session_state()
 st.title("Network Analysis Reporting", text_alignment="center")
@@ -31,4 +34,14 @@ else:
             file_name=f"batq_report_{snapshot_name}.html",
             mime="text/html",
         )
+        xlsx_bytes = build_report_xlsx(data)
+        if xlsx_bytes:
+            st.download_button(
+                "Download Spreadsheet (.xlsx)",
+                data=xlsx_bytes,
+                file_name=f"batq_report_{snapshot_name}.xlsx",
+                mime=XLSX_MIME,
+            )
+        else:
+            st.info("No data available to export.")
     st.iframe(report, height=600)

@@ -43,7 +43,6 @@ def test_analysis_without_questions_asks_for_some():
     bf = FakeBatfish()
     at = run_page("analysis", bf, activesnap={"name": "snapA"})
     assert any("Select some questions" in w.value for w in at.warning)
-    assert any("No data available to export" in i.value for i in at.sidebar.info)
     assert bf.calls_named("answer") == []
 
 
@@ -67,10 +66,9 @@ def test_analysis_keeps_results_for_the_reports():
     assert all(d["answer"] is not None for d in data)
 
 
-def test_analysis_offers_the_spreadsheet_download():
+def test_analysis_page_has_no_download_buttons():
     at = run_page("analysis", FakeBatfish(), activesnap={"name": "snapA"}, qlist=QLIST)
-    buttons = at.get("download_button")
-    assert [b.proto.label for b in buttons] == ["Download Spreadsheet (.xlsx)"]
+    assert at.get("download_button") == []
 
 
 def test_analysis_continues_when_a_question_fails():
@@ -78,8 +76,17 @@ def test_analysis_continues_when_a_question_fails():
     at = run_page("analysis", bf, activesnap={"name": "snapA"}, qlist=QLIST)
     data = at.session_state["report_analysis_data"]
     assert [d["answer"] is None for d in data] == [False, True, True]
-    assert at.get("download_button")  # the question that worked is still exported
     assert any("failed" in s.label for s in at.status)
+    # the question that worked is still exported by the reporting page
+    reporting = run_page(
+        "reporting",
+        report_analysis_data=data,
+        activesnap={"name": "snapA"},
+    )
+    assert [b.proto.label for b in reporting.get("download_button")] == [
+        "Download HTML Report",
+        "Download Spreadsheet (.xlsx)",
+    ]
 
 
 def test_analysis_with_only_failing_questions_has_nothing_to_export():
@@ -90,8 +97,15 @@ def test_analysis_with_only_failing_questions_has_nothing_to_export():
         activesnap={"name": "snapA"},
         qlist={"Node Properties": QLIST["Node Properties"]},
     )
-    assert at.get("download_button") == []
-    assert any("No data available to export" in i.value for i in at.sidebar.info)
+    reporting = run_page(
+        "reporting",
+        report_analysis_data=at.session_state["report_analysis_data"],
+        activesnap={"name": "snapA"},
+    )
+    assert [b.proto.label for b in reporting.get("download_button")] == [
+        "Download HTML Report"
+    ]
+    assert any("No data available to export" in i.value for i in reporting.sidebar.info)
 
 
 def test_analysis_shows_traceroute_answers():
@@ -268,7 +282,10 @@ def test_reporting_builds_a_report_from_analysis_results():
         activesnap={"name": "snapA"},
     )
     buttons = at.get("download_button")
-    assert [b.proto.label for b in buttons] == ["Download HTML Report"]
+    assert [b.proto.label for b in buttons] == [
+        "Download HTML Report",
+        "Download Spreadsheet (.xlsx)",
+    ]
     assert not buttons[0].proto.disabled
 
 
@@ -282,5 +299,8 @@ def test_reporting_handles_a_failed_question_in_the_data():
         }
     ]
     at = run_page("reporting", report_analysis_data=data, activesnap={"name": "s"})
-    assert at.get("download_button")
+    assert [b.proto.label for b in at.get("download_button")] == [
+        "Download HTML Report"
+    ]
+    assert any("No data available to export" in i.value for i in at.sidebar.info)
     assert not at.error
