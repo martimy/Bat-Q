@@ -70,7 +70,7 @@ Note that most Batfish questions can be used for single or two snapshots. There 
 
 Bat-Q produces two kinds of reports. They are separate because they serve different purposes.
 
-- **Analysis Reporting** collects the answers shown on the Analysis page into one HTML report. The Analysis page also offers the same answers as an Excel spreadsheet (one sheet per answer).
+- **Analysis Reporting** collects the answers shown on the Analysis page into one HTML report, and also offers the same answers as an Excel spreadsheet (one sheet per answer).
 - **Assertion Reporting** summarizes the results of the assertions: an overall verdict (failed, inconclusive or passed), a table with one line per assertion, and details for every assertion that failed or could not be evaluated. It is offered as an HTML report and as an Excel spreadsheet.
 
 Run the questions or assertions first; the reporting pages use their latest results for the active snapshot.
