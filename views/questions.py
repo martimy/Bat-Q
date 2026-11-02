@@ -168,6 +168,13 @@ cats_expander = st.session_state.get("cats_expander", {})
 qlist = sort_qlist_by_schema(st.session_state.get("qlist", {}), bf_questions)
 st.session_state.qlist = qlist
 
+# Seed checkbox widget state from the selected questions. Widgets keyed by
+# question name must not also receive a `value=` default, or Streamlit warns
+# about the value being set both ways.
+for q_name in quest_dict:
+    if q_name not in st.session_state:
+        st.session_state[q_name] = q_name in qlist
+
 
 with st.sidebar:
     st.markdown("*Scroll down to load or save selected questions*")
@@ -250,7 +257,6 @@ for selected_category in bf_questions:
                     cb_label = f"{question_name} *" if has_req else question_name
                     st.checkbox(
                         cb_label,
-                        value=question_name in qlist,
                         on_change=update_selected_questions,
                         args=(question_name,),
                         key=question_name,
